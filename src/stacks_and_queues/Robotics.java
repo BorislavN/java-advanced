@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class Robotics {
+    private static int minRemainingTime = 0;
+
     public static void main(String[] args) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
@@ -35,6 +37,14 @@ public class Robotics {
         }
 
         while (!items.isEmpty() && !robots.isEmpty()) {
+            //Skips the times the item queue stay looping, waiting for a free robot
+            if (minRemainingTime > 0) {
+                int value = minRemainingTime - minRemainingTime % items.size();
+
+                time = time.plusSeconds(value);
+                robots.forEach(robot -> robot.setWorkLeft(robot.getWorkLeft() - value));
+            }
+
             time = time.plusSeconds(1);
 
             String item = items.poll();
@@ -47,6 +57,7 @@ public class Robotics {
 
     private static boolean findAvailable(List<Robot> robots, LocalTime time, String item) {
         boolean wasAccepted = false;
+        minRemainingTime = Integer.MAX_VALUE;
 
         for (Robot worker : robots) {
             if (!wasAccepted && worker.getWorkLeft() <= 0) {
@@ -61,6 +72,10 @@ public class Robotics {
             }
 
             worker.work();
+
+            if (worker.getWorkLeft() < minRemainingTime) {
+                minRemainingTime = worker.workLeft;
+            }
         }
 
         return wasAccepted;
