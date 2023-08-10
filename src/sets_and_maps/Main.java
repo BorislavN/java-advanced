@@ -1,4 +1,4 @@
-package stacks_and_queues;
+package sets_and_maps;
 
 import java.io.BufferedReader;
 import java.io.IOException;

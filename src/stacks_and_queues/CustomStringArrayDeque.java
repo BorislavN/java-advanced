@@ -1,4 +1,4 @@
-package sets_and_maps;
+package stacks_and_queues;
 
 import java.util.ArrayList;
 import java.util.List;
