@@ -6,8 +6,8 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MatrixRotation {
-    private static char[][] matrix;
+public class MatrixRotationV2 {
+    private static List<char[]> matrix;
 
     public static void main(String[] args) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -15,20 +15,14 @@ public class MatrixRotation {
         int degrees = Integer.parseInt(reader.readLine().replaceAll("\\D", ""));
 
         String input;
-        List<String> list = new ArrayList<>();
-
         int maxLength = 0;
+        matrix = new ArrayList<>();
+
 
         while (!"END".equals(input = reader.readLine())) {
-            list.add(input);
+            matrix.add(input.toCharArray());
 
             maxLength = Math.max(input.length(), maxLength);
-        }
-
-        matrix = new char[list.size()][];
-
-        for (int row = 0; row < matrix.length; row++) {
-            matrix[row] = list.get(row).toCharArray();
         }
 
         System.out.println(rotateMatrix(degrees, maxLength));
@@ -45,19 +39,21 @@ public class MatrixRotation {
                     output.append(row);
                     output.append(System.lineSeparator());
                 }
+
                 break;
             case 90:
                 for (int col = 0; col < maxLength; col++) {
-                    for (int row = matrix.length - 1; row >= 0; row--) {
-                        output.append(isInRange(row, col) ? matrix[row][col] : " ");
+                    for (int row = matrix.size() - 1; row >= 0; row--) {
+                        output.append(isInRange(row, col) ? matrix.get(row)[col] : " ");
                     }
                     output.append(System.lineSeparator());
                 }
+
                 break;
             case 180:
-                for (int row = matrix.length - 1; row >= 0; row--) {
+                for (int row = matrix.size() - 1; row >= 0; row--) {
                     for (int col = maxLength - 1; col >= 0; col--) {
-                        output.append(isInRange(row, col) ? matrix[row][col] : " ");
+                        output.append(isInRange(row, col) ? matrix.get(row)[col] : " ");
                     }
                     output.append(System.lineSeparator());
                 }
@@ -65,11 +61,12 @@ public class MatrixRotation {
                 break;
             case 270:
                 for (int col = maxLength - 1; col >= 0; col--) {
-                    for (int row = 0; row < matrix.length; row++) {
-                        output.append(isInRange(row, col) ? matrix[row][col] : " ");
+                    for (int row = 0; row < matrix.size(); row++) {
+                        output.append(isInRange(row, col) ? matrix.get(row)[col] : " ");
                     }
                     output.append(System.lineSeparator());
                 }
+
                 break;
         }
 
@@ -77,6 +74,6 @@ public class MatrixRotation {
     }
 
     private static boolean isInRange(int row, int col) {
-        return row >= 0 && row < matrix.length && col >= 0 && col < matrix[row].length;
+        return row >= 0 && row < matrix.size() && col >= 0 && col < matrix.get(row).length;
     }
 }
