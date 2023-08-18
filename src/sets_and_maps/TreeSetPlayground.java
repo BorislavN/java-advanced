@@ -58,7 +58,6 @@ public class TreeSetPlayground {
         public String toString() {
             return String.format("Id: %d Name: %s", this.id, this.name);
         }
-
     }
 
     private static class ByNamePersonComparator implements Comparator<Person> {
