@@ -45,15 +45,4 @@ public class SerbianUnleashed {
 
         System.out.println(output);
     }
-
-    private static int indexOfVenue(String[] data) {
-        for (int index = 0; index < data.length; index++) {
-            String element = data[index];
-            if (element.charAt(0) == '@') {
-                return index;
-            }
-        }
-
-        return -1;
-    }
 }
