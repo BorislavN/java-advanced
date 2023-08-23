@@ -193,7 +193,7 @@ public class CustomMapDemo {
         @Override
         public String toString() {
             StringBuilder output = new StringBuilder();
-            output.append(String.format("Capacity: %d Size: %d%n", this.array.length, this.size));
+            output.append(String.format("Capacity: %d Size: %d%n", this.array.length, this.getCapacity()));
 
             for (MyNode node : this.array) {
                 MyNode temp = node;
