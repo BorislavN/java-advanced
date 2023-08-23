@@ -1,5 +1,7 @@
 package sets_and_maps;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.Objects;
 
 public class CustomMapDemo {
@@ -35,6 +37,8 @@ public class CustomMapDemo {
         System.out.println(map.get("key3"));
         System.out.println(map.get("key15"));
 
+        System.out.println(map);
+
         map.remove("key5");
         map.remove("key6");
         map.remove("key7");
@@ -47,77 +51,65 @@ public class CustomMapDemo {
         map.remove("key14");
 
         System.out.println(map.getSize());
-        //TODO
+        System.out.println(map);
     }
 
     private static class MyMap {
         private MyNode[] array;
-        private final int initialCapacity;
-        private final double loadThreshold;
-        private final double minLoadThreshold;
-
         private int numberOfOperations;
         private int size;
 
         public MyMap() {
-            this.initialCapacity = 11;
-            this.loadThreshold = 0.75;
-            this.minLoadThreshold = 0.3;
             this.numberOfOperations = 0;
-            this.array = new MyNode[this.initialCapacity];
+            this.array = new MyNode[11];
             this.size = 0;
         }
 
         public void put(String key, String value) {
-            MyNode current = new MyNode(key, value);
-
-            int index = this.getIndex(current.getHash());
-
-            System.out.printf("key: %s val: %s hash: %d%n", key, value, current.getHash());
-
-            MyNode destination = this.array[index];
-
-            if (destination == null) {
-                this.array[index] = current;
-                this.numberOfOperations++;
-                this.size++;
-            } else {
-                boolean inserted = false;
-
-                while (destination != null) {
-                    if (current.getKey().equals(destination.getKey())) {
-                        current.setNext(destination.getNext());
-                        this.array[index] = current;
-
-                        inserted = true;
-                        break;
-                    }
-
-                    destination = destination.getNext();
-                }
-
-                if (!inserted) {
-                    current.setNext(this.array[index]);
-                    this.array[index] = current;
-                    this.numberOfOperations++;
-                    this.size++;
-                }
-            }
+            this.addElement(new MyNode(key, value));
 
             this.checkForResize();
         }
 
+        private void addElement(MyNode node) {
+            int index = this.getIndex(node.getHash());
+
+            boolean isModified = false;
+
+            if (this.array[index] != null) {
+                MyNode temp = this.array[index];
+
+                while (temp != null) {
+                    if (node.getKey().equals(temp.getKey())) {//if the key already exists
+                        temp.setValue(node.getValue());//we modify the value
+                        isModified = true;
+
+                        break;
+                    }
+
+                    temp = temp.getNext();
+                }
+            }
+
+            if (!isModified) {
+                node.setNext(this.array[index]);
+                this.array[index] = node;
+
+                this.numberOfOperations++;
+                this.size++;
+            }
+        }
+
         public String get(String key) {
             int index = this.getIndex(MyNode.generateHash(key));
+            MyNode rootNode = this.array[index];
 
-            MyNode temp = this.array[index];
-
-            while (temp != null) {
-                if (temp.getKey().equals(key)) {
-                    return temp.getValue();
+            while (rootNode != null) {
+                if (rootNode.getKey().equals(key)) {
+                    return rootNode.getValue();
                 }
 
-                temp = temp.getNext();
+                rootNode = rootNode.getNext();
             }
 
             return null;
@@ -125,21 +117,19 @@ public class CustomMapDemo {
 
         public void remove(String key) {
             int index = this.getIndex(MyNode.generateHash(key));
-            MyNode prev = null;
-
             MyNode temp = this.array[index];
+            MyNode prev = null;
 
             while (temp != null) {
                 if (temp.getKey().equals(key)) {
-
                     if (prev != null) {
                         prev.setNext(temp.getNext());
                     } else {
                         this.array[index] = temp.getNext();
                     }
 
-                    this.size--;
                     this.numberOfOperations++;
+                    this.size--;
 
                     break;
                 }
@@ -159,56 +149,63 @@ public class CustomMapDemo {
             return this.size;
         }
 
+        private int getCapacity() {
+            return this.array.length;
+        }
+
         private void checkForResize() {
-            if (this.numberOfOperations >= 7) {
+            if (this.numberOfOperations > 7) {
                 double load = this.size * 1.0 / this.array.length;
 
-                if (load >= this.loadThreshold) {
-                    resize(Math.max(this.initialCapacity, this.array.length) * 2);
+                if (load > 0.75) {
+                    resize(Math.max(11, this.array.length) * 2);
                 }
 
-                if (this.array.length > this.initialCapacity && load <= this.minLoadThreshold) {
-                    resize(Math.max(this.initialCapacity, this.array.length / 2));
+                if (this.array.length > 11 && load < 0.25) {
+                    resize(Math.max(11, this.array.length / 2));
                 }
             }
         }
 
         private void resize(int newSize) {
-            MyNode[] temp = new MyNode[newSize];
+            Deque<MyNode> stack = new ArrayDeque<>();
 
             for (MyNode node : this.array) {
                 if (node != null) {
                     MyNode currentNode = node;
 
                     while (currentNode != null) {
-                        int index = this.getIndex(currentNode.getHash());
-
-                        MyNode copy = new MyNode(currentNode.getKey(), currentNode.getValue());
-
-                        if (temp[index] == null) {
-                            temp[index] = copy;
-                        } else {
-                            MyNode currentInTemp = temp[index];
-
-                            while (true) {
-                                if (currentInTemp.getNext() == null) {
-                                    currentInTemp.setNext(copy);
-                                    break;
-                                }
-
-                                currentInTemp = currentInTemp.getNext();
-                            }
-
-                        }
-
+                        stack.push(new MyNode(currentNode.getKey(), currentNode.getValue()));//load a copy of the current node to the stack
                         currentNode = currentNode.getNext();
                     }
                 }
             }
 
-            this.array = temp;
+            this.array = new MyNode[newSize];
+            stack.forEach(this::addElement);
+
             this.numberOfOperations = 0;
+            size = stack.size();
+
             System.out.printf("%nArray resized: new length - %d%n%n", this.array.length);
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder output = new StringBuilder();
+            output.append(String.format("Capacity: %d Size: %d%n", this.array.length, this.size));
+
+            for (MyNode node : this.array) {
+                MyNode temp = node;
+
+                while (temp != null) {
+                    output.append(temp).append(System.lineSeparator());
+
+                    temp = temp.getNext();
+                }
+            }
+
+            return output.toString().trim();
         }
     }
 
@@ -255,6 +252,25 @@ public class CustomMapDemo {
 
         public void setNext(MyNode next) {
             this.next = next;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder output = new StringBuilder();
+            MyNode temp = this;
+
+            while (temp != null) {
+                output.append(String.format("| Hash: %d Key: %s Value: %s | "
+                        , temp.getHash()
+                        , temp.getKey()
+                        , temp.getValue())
+                );
+
+                temp = temp.getNext();
+            }
+
+
+            return output.toString().trim();
         }
     }
 }
