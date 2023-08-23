@@ -24,7 +24,6 @@ public class DragonArmy {
             int health = setDefault(data[3], 250);
             int armor = setDefault(data[4], 10);
 
-
             dragons.putIfAbsent(type, new TreeMap<>());
             dragons.get(type).put(name, new int[]{damage, health, armor});
         }

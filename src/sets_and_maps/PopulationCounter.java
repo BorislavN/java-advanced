@@ -3,7 +3,6 @@ package sets_and_maps;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -28,7 +27,7 @@ public class PopulationCounter {
         StringBuilder output = new StringBuilder();
 
         countries.entrySet().stream()
-                .sorted((f, s) -> getTotalPopulation(s.getValue()).compareTo(getTotalPopulation(f.getValue())))
+                .sorted((f, s) -> Long.compare(getTotalPopulation(s.getValue()), getTotalPopulation(f.getValue())))
                 .forEach(entry -> {
                     output.append(String.format("%s (total population: %d)%n"
                             , entry.getKey()
@@ -47,9 +46,9 @@ public class PopulationCounter {
         System.out.println(output);
     }
 
-    private static BigInteger getTotalPopulation(Map<String, Integer> country) {
+    private static long getTotalPopulation(Map<String, Integer> country) {
         return country.values().stream()
-                .map(BigInteger::valueOf)
-                .reduce(BigInteger.ZERO, BigInteger::add);
+                .mapToLong(Integer::longValue)
+                .sum();
     }
 }
