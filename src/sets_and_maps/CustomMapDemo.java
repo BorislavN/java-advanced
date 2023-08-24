@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.Objects;
 
+//Collisions are resolved by chaining the elements in a linked list
 public class CustomMapDemo {
     public static void main(String[] args) {
 
@@ -159,9 +160,7 @@ public class CustomMapDemo {
 
                 if (load > 0.75) {
                     resize(Math.max(11, this.array.length) * 2);
-                }
-
-                if (this.array.length > 11 && load < 0.25) {
+                } else if (load < 0.25) {
                     resize(Math.max(11, this.array.length / 2));
                 }
             }
@@ -193,7 +192,7 @@ public class CustomMapDemo {
         @Override
         public String toString() {
             StringBuilder output = new StringBuilder();
-            output.append(String.format("Capacity: %d Size: %d%n", this.array.length, this.getCapacity()));
+            output.append(String.format("Capacity: %d Size: %d%n", this.getCapacity(), this.getSize()));
 
             for (MyNode node : this.array) {
                 MyNode temp = node;
@@ -211,7 +210,7 @@ public class CustomMapDemo {
 
     private static class MyNode {
         private final int hash;
-        private String key;
+        private final String key;
         private String value;
         private MyNode next;
 
@@ -227,15 +226,11 @@ public class CustomMapDemo {
         }
 
         public static int generateHash(String key) {
-            return Objects.hashCode(key);
+            return Math.abs(Objects.hashCode(key));
         }
 
         public String getKey() {
             return this.key;
-        }
-
-        public void setKey(String key) {
-            this.key = key;
         }
 
         public String getValue() {
