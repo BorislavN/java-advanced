@@ -38,6 +38,7 @@ public class CustomMapDemo {
         System.out.println(map.get("key3"));
         System.out.println(map.get("key15"));
 
+        System.out.println();
         System.out.println(map);
 
         map.remove("key5");
@@ -52,6 +53,8 @@ public class CustomMapDemo {
         map.remove("key14");
 
         System.out.println(map.getSize());
+
+        System.out.println();
         System.out.println(map);
     }
 
@@ -160,7 +163,7 @@ public class CustomMapDemo {
 
                 if (load > 0.75) {
                     resize(Math.max(11, this.array.length) * 2);
-                } else if (load < 0.25) {
+                } else if (this.array.length > 11 && load < 0.25) {
                     resize(Math.max(11, this.array.length / 2));
                 }
             }

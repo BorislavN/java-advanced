@@ -16,6 +16,7 @@ public class CustomMapDemoV2 {
         map.put("key1", "Azis");
 
         System.out.println(map);
+        System.out.println();
 
         System.out.println(map.get("key4"));
         System.out.println(map.get("key1"));
@@ -25,6 +26,7 @@ public class CustomMapDemoV2 {
         map.remove("key2");
         map.remove("key28");
 
+        System.out.println();
         System.out.println(map);
 
         map.put("key10", "Azis10");
@@ -52,27 +54,46 @@ public class CustomMapDemoV2 {
 
         System.out.println(map);
 
-        //TODO: after resize the maps stops working correctly
+        map.remove("key10");
+        map.remove("key11");
+        map.remove("key12");
+        map.remove("key13");
+        map.remove("key14");
+        map.remove("key15");
+        map.remove("key16");
+        map.remove("key17");
+        map.remove("key18");
+        map.remove("key19");
+        map.remove("key20");
+        map.remove("key21");
+        map.remove("key22");
+        map.remove("key23");
+
+        map.put("key11", "I'm back");
+
+        System.out.println(map);
+        //TODO: Mostly works, but if I don't modify the hash when calculating the step
+        //TODO: | Hash: 101943519 Key: key22 Value: Azis22 |, stays in the array, but should be deleted
     }
 
     private static class MyMap {
         private boolean[] primes;
         private MyNode[] array;
         private int size;
-        private int initialCapacity;
-        private double maxLoad;
-        private double minLoad;
+        private final int initialCapacity;
+        private final double maxLoad;
+        private final double minLoad;
 
         private int numberOfOperations;
 
         public MyMap() {
             this.numberOfOperations = 0;
             this.maxLoad = 0.6;
-            this.minLoad = 0.1;
+            this.minLoad = 0.2;
             this.initialCapacity = 11;
             this.size = 0;
             this.array = new MyNode[this.initialCapacity];
-             this.generatePrimeList(this.initialCapacity * 3);
+            this.generatePrimeList(this.initialCapacity * 3);
         }
 
         public String get(String key) {
@@ -108,7 +129,7 @@ public class CustomMapDemoV2 {
         }
 
         private void checkForResize() {
-            if (numberOfOperations>7){
+            if (numberOfOperations > 7) {
                 double load = this.size * 1.0 / this.getCapacity();
 
                 if (load >= this.maxLoad) {
@@ -117,16 +138,18 @@ public class CustomMapDemoV2 {
                     }
 
                     resize(getNextPrime(this.getCapacity() * 2));
-                } else if (load <= this.minLoad) {
+
+                } else if (this.getCapacity() > this.initialCapacity && load <= this.minLoad) {
+
                     resize(getNextPrime(Math.max(this.initialCapacity, this.getCapacity() / 2)));
                 }
             }
         }
 
-        private void resize(int newSize) {
+        private void resize(int newSize) {//The array only resizes after additions, if the space is too much or too little
             MyNode[] temp = Arrays.copyOf(this.array, this.array.length);
             this.array = new MyNode[newSize];
-            this.numberOfOperations=0;
+            this.numberOfOperations = 0;
             this.size = 0;
 
             for (MyNode node : temp) {
@@ -192,7 +215,7 @@ public class CustomMapDemoV2 {
         }
 
         private int getStepNumber(String key) {
-            return (MyNode.generateHash(key) % (this.getCapacity() - 1)) + 1;
+            return (MyNode.generateHash(key+"code") % (this.getCapacity() - 1)) + 1;
         }
 
         public int getCapacity() {
@@ -213,12 +236,12 @@ public class CustomMapDemoV2 {
             return this.initialCapacity;//return the initial capacity as a failsafe;
         }
 
-        private void  generatePrimeList(int end) {
+        private void generatePrimeList(int end) {
             this.primes = new boolean[end + 1];
-            Arrays.fill(  this.primes, 2,   this.primes.length, true);
+            Arrays.fill(this.primes, 2, this.primes.length, true);
 
             for (int number = 2; number * number <= end; number++) {
-                if (  this.primes[number]) {
+                if (this.primes[number]) {
                     for (int current = number * 2; current <= end; current += number) {
                         this.primes[current] = false;
                     }
