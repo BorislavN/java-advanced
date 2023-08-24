@@ -72,7 +72,7 @@ public class CustomMapDemoV2 {
             this.initialCapacity = 11;
             this.size = 0;
             this.array = new MyNode[this.initialCapacity];
-            this.primes = generatePrimeList(this.initialCapacity * 3);
+             this.generatePrimeList(this.initialCapacity * 3);
         }
 
         public String get(String key) {
@@ -213,19 +213,17 @@ public class CustomMapDemoV2 {
             return this.initialCapacity;//return the initial capacity as a failsafe;
         }
 
-        private boolean[] generatePrimeList(int end) {
-            boolean[] isPrime = new boolean[end + 1];
-            Arrays.fill(isPrime, 2, isPrime.length, true);
+        private void  generatePrimeList(int end) {
+            this.primes = new boolean[end + 1];
+            Arrays.fill(  this.primes, 2,   this.primes.length, true);
 
             for (int number = 2; number * number <= end; number++) {
-                if (isPrime[number]) {
+                if (  this.primes[number]) {
                     for (int current = number * 2; current <= end; current += number) {
-                        isPrime[current] = false;
+                        this.primes[current] = false;
                     }
                 }
             }
-
-            return isPrime;
         }
 
         @Override
