@@ -33,6 +33,22 @@ public class CustomMapDemo {
         map.put("key13", "Gosho13");
         map.put("key14", "Gosho14");
         map.put("key15", "Gosho15");
+        map.put("key16", "Azis16");
+        map.put("key17", "Azis17");
+        map.put("key18", "Azis18");
+
+        System.out.println(map.get("key18"));
+        System.out.println(map.get("hahahahah"));
+
+        map.put("key19", "Azis19");
+        map.put("key20", "Azis20");
+        map.put("key21", "Azis21");
+        map.put("key22", "Azis22");
+        map.put("key23", "Azis23");
+        map.put("key24", "Azis24");
+        map.put("key25", "Azis25");
+        map.put("key26", "Azis26");
+        map.put("key27", "Azis27");
 
         System.out.println(map.get("key2"));
         System.out.println(map.get("key3"));
@@ -51,11 +67,24 @@ public class CustomMapDemo {
         map.remove("key12");
         map.remove("key13");
         map.remove("key14");
+        map.remove("key15");
+        map.remove("key16");
+        map.remove("key17");
+        map.remove("key18");
+        map.remove("key19");
+        map.remove("key20");
+        map.remove("key21");
+        map.remove("key22");
+        map.remove("key23");
 
         System.out.println(map.getSize());
 
         System.out.println();
         System.out.println(map);
+
+        System.out.println();
+        System.out.println(map.get("key3"));
+        System.out.println(map.get("key27"));
     }
 
     private static class MyMap {

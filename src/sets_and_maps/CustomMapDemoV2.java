@@ -72,8 +72,11 @@ public class CustomMapDemoV2 {
         map.put("key11", "I'm back");
 
         System.out.println(map);
-        //TODO: Mostly works, but if I don't modify the hash when calculating the step
-        //TODO: | Hash: 101943519 Key: key22 Value: Azis22 |, stays in the array, but should be deleted
+
+        System.out.println();
+        System.out.println(map.get("key11"));
+        System.out.println(map.get("key22"));
+        System.out.println(map.get("key27"));
     }
 
     private static class MyMap {
@@ -83,14 +86,15 @@ public class CustomMapDemoV2 {
         private final int initialCapacity;
         private final double maxLoad;
         private final double minLoad;
-
         private int numberOfOperations;
+        private final int operationsThreshold;
 
         public MyMap() {
             this.numberOfOperations = 0;
             this.maxLoad = 0.6;
             this.minLoad = 0.2;
             this.initialCapacity = 11;
+            this.operationsThreshold = 7;
             this.size = 0;
             this.array = new MyNode[this.initialCapacity];
             this.generatePrimeList(this.initialCapacity * 3);
@@ -129,7 +133,7 @@ public class CustomMapDemoV2 {
         }
 
         private void checkForResize() {
-            if (numberOfOperations > 7) {
+            if (this.numberOfOperations > this.operationsThreshold) {
                 double load = this.size * 1.0 / this.getCapacity();
 
                 if (load >= this.maxLoad) {
@@ -191,17 +195,14 @@ public class CustomMapDemoV2 {
 
             int currentIndex = initialIndex;
 
-            while (this.array[currentIndex] != null) {
-                if (key.equals(this.array[currentIndex].getKey())) {
+            do {
+                if (this.array[currentIndex] != null && key.equals(this.array[currentIndex].getKey())) {
                     return currentIndex;
                 }
 
                 currentIndex = getNextIndex(currentIndex, step);
 
-                if (currentIndex == initialIndex) {
-                    break;
-                }
-            }
+            } while (currentIndex != initialIndex);
 
             return -1;
         }
@@ -215,7 +216,8 @@ public class CustomMapDemoV2 {
         }
 
         private int getStepNumber(String key) {
-            return (MyNode.generateHash(key+"code") % (this.getCapacity() - 1)) + 1;
+            return (MyNode.generateHash(key + "code") % (this.getCapacity() - 1)) + 1;//Here we are modifying the key, to offset the hash
+//            return (MyNode.generateHash(key) % (this.getCapacity() - 1)) + 1;//but it works with the standard hash too
         }
 
         public int getCapacity() {
