@@ -14,7 +14,8 @@ public class SumLines {
             String input;
 
             while (null != (input = reader.readLine())) {
-                output.append(input.chars().sum()).append(System.lineSeparator());
+                output.append(input.chars().sum());
+                output.append(System.lineSeparator());
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
