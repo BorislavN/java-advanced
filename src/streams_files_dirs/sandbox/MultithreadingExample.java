@@ -64,6 +64,7 @@ public class MultithreadingExample {
         };
     }
 
+    //This example is directly taken from the ExecutorService official documentation
     private static void shutdownAndAwaitTermination(ExecutorService pool) {
         pool.shutdown(); // Disable new tasks from being submitted
 
