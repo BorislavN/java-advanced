@@ -5,4 +5,5 @@ out/
 
 Java Advanced Exercise.iml
 .idea/
-src/streams_files_dirs/exercises/resources/output*.txt
+src/streams_files_dirs/exercises/resources/output*
+src/streams_files_dirs/exercises/resources/copy.jpg
