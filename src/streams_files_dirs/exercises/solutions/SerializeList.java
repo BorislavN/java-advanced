@@ -3,6 +3,7 @@ package streams_files_dirs.exercises.solutions;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -24,7 +25,11 @@ public class SerializeList {
             outputStream.writeObject(list);
             outputStream.flush();
 
-            List<Double> loaded = (List<Double>) inputStream.readObject();
+            Object loaded = inputStream.readObject();
+
+            //the type is preserved during serialization
+            System.out.println(loaded instanceof List<?>);
+            System.out.println(loaded instanceof HttpClient);
 
             System.out.println("Original: " + list);
             System.out.println("Loaded: " + loaded);
