@@ -8,3 +8,5 @@ Java Advanced Exercise.iml
 src/streams_files_dirs/exercises/resources/output*
 src/streams_files_dirs/exercises/resources/copy.jpg
 src/streams_files_dirs/exercises/resources/unzipped
+src/streams_files_dirs/exercises/resources/watched
+src/streams_files_dirs/exercises/resources/sandbox/copy**
