@@ -6,6 +6,7 @@ import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.FileLock;
 import java.nio.file.Path;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.file.StandardOpenOption.*;
@@ -19,61 +20,56 @@ public class AsynchronousFileChannelDemoV4 {
         Path filePath = Path.of("src/streams_files_dirs/exercises/resources/sandbox/asyncData.txt");
         Path copyPath = Path.of("src/streams_files_dirs/exercises/resources/sandbox/copyDataAsync2.txt");
 
-        FileLock inputLock;
-        FileLock outputLock;
-
-        ReentrantLock lock = new ReentrantLock(true);//Fairness enabled lock
-
         try (
                 AsynchronousFileChannel inChannel = AsynchronousFileChannel.open(filePath, READ);
                 AsynchronousFileChannel outChannel = AsynchronousFileChannel.open(copyPath, TRUNCATE_EXISTING, WRITE, CREATE)
         ) {
-            inputLock = aquireFileLock(inChannel, true);
-            outputLock = aquireFileLock(outChannel, false);
+            //the closing of the channels releases the locks
+            acquireFileLock(inChannel, true);
+            acquireFileLock(outChannel, false);
 
             ByteBuffer buffer = ByteBuffer.allocate(256);
+            ReadHandlerWithLock handler = new ReadHandlerWithLock();
 
-            ReadHandlerWithLock handler = new ReadHandlerWithLock(lock);
-
-            while (inChannel.size() > outChannel.size()) {
-                lock.lock();
+            while ((inChannel.size() > outChannel.size())) {
                 inChannel.read(buffer, outChannel.size(), buffer, handler);
-                lock.unlock();
+                handler.waitForData();//Waiting for data
 
-                //TODO: output is all over the place, will try to fix it tomorrow...
+                //Exit the loop without writing to the file
+                if (handler.readFailed()) {
+                    break;
+                }
 
                 outChannel.write(buffer.asReadOnlyBuffer(), outChannel.size());
             }
 
-            if (inputLock != null && outputLock != null) {
-                inputLock.release();
-                outputLock.release();
-            }
+
         } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-            }
+            System.out.println("Exception occurred: " + e.getMessage());
         }
     }
 
-    private static FileLock aquireFileLock(AsynchronousFileChannel channel, boolean isShared) throws IOException {
+    private static void acquireFileLock(AsynchronousFileChannel channel, boolean isShared) throws IOException {
         FileLock lock = null;
 
+        //Loops until it locks, the lock is later released after closing the underlying chanel
         while (lock == null) {
             lock = channel.tryLock(0, Long.MAX_VALUE, isShared);
         }
-
-        return lock;
     }
 }
 
 class ReadHandlerWithLock implements CompletionHandler<Integer, ByteBuffer> {
     private final ReentrantLock lock;
+    private final Condition dataReady;
+    private boolean readFinished;
+    private boolean readFailed;
 
-    public ReadHandlerWithLock(ReentrantLock lock) {
-        this.lock = lock;
+    public ReadHandlerWithLock() {
+        this.lock = new ReentrantLock(true);
+        this.dataReady = lock.newCondition();
+        this.readFinished = false;
+        this.readFailed = false;
     }
 
     @Override
@@ -82,9 +78,15 @@ class ReadHandlerWithLock implements CompletionHandler<Integer, ByteBuffer> {
             this.lock.lock();
 
             if (result > 0) {
-                System.out.println(Thread.currentThread().getName() + " finished reading data.");
                 attachment.flip();
+                this.readFinished = true;//set the flag to true
+                this.dataReady.signalAll();//signal the other threads
+
+                System.out.println(Thread.currentThread().getName() + " finished reading data.");
+                return;
             }
+
+            this.failed(new Throwable("No data was read!"), attachment);
         } finally {
             this.lock.unlock();
         }
@@ -92,6 +94,48 @@ class ReadHandlerWithLock implements CompletionHandler<Integer, ByteBuffer> {
 
     @Override
     public void failed(Throwable exc, ByteBuffer attachment) {
-        throw new RuntimeException("Error occurred while writing a line!");
+        try {
+            this.lock.lock();
+
+            this.readFailed = true;
+            this.dataReady.signalAll();
+
+            System.out.printf("Thread: %s - Exception: %s%n"
+                    , Thread.currentThread().getName()
+                    , exc.getMessage());
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    public void waitForData() {
+        try {
+            this.lock.lock();
+
+            while (!this.readFinished) {
+                if (this.readFailed) {
+                    return;//Wakeup and continue
+                }
+
+                this.dataReady.awaitUninterruptibly();
+            }
+
+            //reset the flag
+            //so the reading of the file can continue correctly
+            this.readFinished = false;
+
+        } finally {
+            this.lock.unlock();
+        }
+    }
+
+    public boolean readFailed() {
+        try {
+            lock.lock();
+
+            return this.readFailed;
+        } finally {
+            lock.unlock();
+        }
     }
 }

@@ -11,7 +11,7 @@ import static java.nio.file.StandardOpenOption.*;
 //AsynchronousFileChannel demo with two channels
 //One reads, the other writes
 //I'm using a synchronized block to wait for a notify() call
-//Then I'm sending the data form te buffer to be written
+//Then I'm sending the data to be written
 //Without the synchronization I was getting incorrect text in the output file
 public class AsynchronousFileChannelDemoV3 {
     public static void main(String[] args) {
@@ -30,11 +30,19 @@ public class AsynchronousFileChannelDemoV3 {
                     inChannel.read(buffer, outChannel.size(), buffer, handler);
 
                     //Wait for the CompletionHandler to notify us
-                    handler.getLock().wait();
+                    //In a loop in case the thread wakes up without being signaled
+                    while (!handler.hasPendingData()) {
+                        if (handler.readHasFailed()) {
+                            return;//Exit the loop in case of a read failure
+                        }
+
+                        handler.getLock().wait();
+                    }
+
+                    //Reset the flag, so the read can continue correctly
+                    handler.resetFlag();
 
                     //We copy the buffer, to avoid sharing it with the other channel
-                    //If we don't, we enter a deadlock
-                    //We don't get in the completed() method, thus never calling notify()
                     outChannel.write(buffer.asReadOnlyBuffer(), outChannel.size());
                 }
             }
@@ -46,29 +54,60 @@ public class AsynchronousFileChannelDemoV3 {
 
 class ReadHandler implements CompletionHandler<Integer, ByteBuffer> {
     private final Object lock;
+    private boolean pendingData;
+    private boolean readFailed;
 
     public ReadHandler() {
         this.lock = new Object();
+        this.pendingData = false;
+        this.readFailed = false;
     }
 
     @Override
     public void completed(Integer result, ByteBuffer attachment) {
         synchronized (this.lock) {
-            //Flip the buffer so it can be written
             if (result > 0) {
-                System.out.println(Thread.currentThread().getName() + " finished reading data.");
-
+                //Flip the buffer so it can be written
                 attachment.flip();
+                this.pendingData = true;
 
                 //We notify the other threads
                 this.lock.notifyAll();
+
+                System.out.println(Thread.currentThread().getName() + " finished reading data.");
+                return;
             }
+
+            this.failed(new Throwable("No data was read!"), attachment);
         }
     }
 
     @Override
     public void failed(Throwable exc, ByteBuffer attachment) {
-        throw new RuntimeException("Error occurred while writing a line!");
+        synchronized (this.lock) {
+            this.readFailed = true;
+            this.lock.notifyAll();
+
+            System.out.println(Thread.currentThread().getName() + " exception occurred - " + exc.getMessage());
+        }
+    }
+
+    public boolean hasPendingData() {
+        synchronized (this.lock) {
+            return this.pendingData;
+        }
+    }
+
+    public void resetFlag() {
+        synchronized (this.lock) {
+            this.pendingData = false;
+        }
+    }
+
+    public boolean readHasFailed() {
+        synchronized (this.lock) {
+            return this.readFailed;
+        }
     }
 
     public Object getLock() {
