@@ -96,7 +96,7 @@ class ReadHandlerWithLock implements CompletionHandler<Integer, ByteBuffer> {
             this.readFailed = true;
             this.dataReady.signalAll();
 
-            System.out.printf("Thread: %s - Exception: %s%n"
+            System.err.printf("Thread: %s - Exception: %s%n"
                     , Thread.currentThread().getName()
                     , exc.getMessage());
         } finally {

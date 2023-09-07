@@ -88,7 +88,7 @@ class ReadHandler implements CompletionHandler<Integer, ByteBuffer> {
             this.readFailed = true;
             this.lock.notifyAll();
 
-            System.out.println(Thread.currentThread().getName() + " exception occurred - " + exc.getMessage());
+            System.err.println(Thread.currentThread().getName() + " exception occurred - " + exc.getMessage());
         }
     }
 
