@@ -13,7 +13,7 @@ import static java.nio.file.StandardOpenOption.*;
 //I'm using a synchronized block to wait for a notify() call
 //Then I'm sending the data to be written
 //Without the synchronization I was getting incorrect text in the output file
-public class AsynchronousFileChannelDemoV3 {
+public class AsynchronousDemoWithSynchronization {
     public static void main(String[] args) {
         Path filePath = Path.of("src/streams_files_dirs/exercises/resources/sandbox/asyncData.txt");
         Path copyPath = Path.of("src/streams_files_dirs/exercises/resources/sandbox/copyDataAsync2.txt");

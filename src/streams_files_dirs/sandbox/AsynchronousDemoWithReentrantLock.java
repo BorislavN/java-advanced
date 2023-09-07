@@ -11,11 +11,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static java.nio.file.StandardOpenOption.*;
 
-//Attempting to get the same result as the V3 Demo
-//but using a ReentrantLock
-//Currently not working, the successful output depends on the writeChanel waiting for the input of the readChannel
-//IDK if the problem can be solved without some type of waiting and notifying
-public class AsynchronousFileChannelDemoV4 {
+public class AsynchronousDemoWithReentrantLock {
     public static void main(String[] args) {
         Path filePath = Path.of("src/streams_files_dirs/exercises/resources/sandbox/asyncData.txt");
         Path copyPath = Path.of("src/streams_files_dirs/exercises/resources/sandbox/copyDataAsync2.txt");
