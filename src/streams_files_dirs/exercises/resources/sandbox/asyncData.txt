@@ -4,3 +4,11 @@ The Panther was a compromise. While having essentially the same Maybach V12 petr
 it had better gun penetration, was lighter and faster, and could traverse rough terrain better than the Tiger I.
 The trade-off was weaker side armour, which made it vulnerable to flanking fire and a weaker high explosive shell.
 The Panther proved to be effective in open country and long-range engagements.
+The Panther was rushed into combat at the Battle of Kursk in the summer of 1943 despite numerous unresolved technical problems,
+leading to high losses due to mechanical failure. Most design flaws were rectified by late 1943 and early 1944, though the bombing of production plants,
+increasing shortages of high-quality alloys for critical components, shortage of fuel and training space,
+and the declining quality of crews all impacted the tank's effectiveness. Though officially classified as a medium tank, at 44.8 metric tons
+the Panther was closer in weight to contemporary foreign heavy tanks. The Panther's weight caused logistical problems, such as an inability to cross certain bridges,
+otherwise the tank had a very high power-to-weight ratio which made it highly mobile.
+The naming of Panther production variants did not, unlike most German tanks, follow alphabetical order: the initial variant,
+Panther "D" (Ausf. D), was followed by "A" and "G" variants.
