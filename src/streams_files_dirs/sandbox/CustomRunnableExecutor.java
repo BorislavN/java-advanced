@@ -42,14 +42,14 @@ class Task {
         this.lock = new Object();
         this.handler = new ExceptionHandler(this.lock);
         this.worker = new Thread(new ExtendedRunnable(runnable, this.lock));
-        worker.setUncaughtExceptionHandler(this.handler);
+        this.worker.setUncaughtExceptionHandler(this.handler);
 
         this.start();
     }
 
     //starts the thread when the class is initialized
     private void start() {
-        worker.start();
+        this.worker.start();
     }
 
     //Blocks until the result is ready, just like Future
@@ -58,12 +58,13 @@ class Task {
     public void get() throws InterruptedException, IllegalStateException {
         synchronized (this.lock) {
             //Wait for the thread to stop
-            while (worker.isAlive()) {
-                this.lock.wait(500);
+            while (this.worker.isAlive()) {
+                Thread.onSpinWait();//different way to wait, saves processor resources
+//                this.lock.wait(300);
             }
 
             if (this.handler.getException() != null) {
-                System.out.println(worker.getName() + " is alive: " + worker.isAlive());
+                System.out.println(this.worker.getName() + " is alive: " + this.worker.isAlive());
                 throw new IllegalStateException(this.handler.getException());
             }
         }
@@ -74,6 +75,9 @@ record ExtendedRunnable(Runnable runnable, Object lock) implements Runnable {
     @Override
     public void run() {
         this.runnable.run();
+
+        //the thread should be closing, but we interrupt it just in case
+        //if an exception was thrown the line will be skipped
         Thread.currentThread().interrupt();
     }
 }
