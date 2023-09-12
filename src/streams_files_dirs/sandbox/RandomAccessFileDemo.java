@@ -20,6 +20,7 @@ public class RandomAccessFileDemo {
                 //-2 because the new line in windows is \r\n
                 long startIndex = file.getFilePointer() - line.length() - 2;
 
+                //The map contains the lines and the line-start indexes
                 allLines.put(startIndex, line);
             }
 

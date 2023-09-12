@@ -59,8 +59,7 @@ class Task {
         synchronized (this.lock) {
             //Wait for the thread to stop
             while (this.worker.isAlive()) {
-                Thread.onSpinWait();//different way to wait, saves processor resources
-//                this.lock.wait(300);
+                this.lock.wait(300);
             }
 
             if (this.handler.getException() != null) {
