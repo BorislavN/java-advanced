@@ -1,15 +1,11 @@
 package streams_files_dirs.sandbox;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
-import java.util.concurrent.RecursiveAction;
-import java.util.concurrent.RecursiveTask;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 //Task can be run standalone(it will use the default pool)
@@ -35,8 +31,7 @@ public class ForkJoinDemo {
 
         System.out.println();
 
-        Instant start = Instant.now();
-
+        //Task returning value
         ValueTask task2 = new ValueTask(new MOBAData(
                 new int[]{5000, -2000, 3000, 500, 2905},
                 new int[]{40, 25, 36, 55, 15},
@@ -44,13 +39,20 @@ public class ForkJoinDemo {
                 new int[]{15, 10, 8, 12, 9}
         ));
 
-        for (CalculationResult calculationResult : pool.invoke(task2)) {
-            System.out.println(calculationResult);
+        pool.submit(task2);
+
+        //Creating a queue with the number of expected results (that is the number of fields in MOBAData)
+        BlockingQueue<CalculationResult> queue = new ArrayBlockingQueue<>(4);
+        //Submitting the blocking task
+        pool.submit(blockingTaskInitializer(queue));
+
+        for (CalculationResult calculationResult : task2.join()) {
+            //Passing the results from th previous task to the queue
+            queue.offer(calculationResult);
         }
 
-        Instant end = Instant.now();
-
-        System.out.println("Time in ms: " + Duration.between(start, end).toMillis());
+        //Waiting for all task to finish
+        ForkJoinTask.helpQuiesce();
     }
 
     private static class VoidTask extends RecursiveAction {
@@ -119,9 +121,9 @@ public class ForkJoinDemo {
         @Override
         protected List<CalculationResult> compute() {
             if (this.name == null) {
-                return this.divideTask()
-                        .parallelStream()
-                        .map(ForkJoinTask::invoke)
+                return invokeAll(this.divideTask())
+                        .stream()
+                        .map(ForkJoinTask::join)
                         .flatMap(Collection::stream)
                         .collect(Collectors.toList());
             }
@@ -140,12 +142,6 @@ public class ForkJoinDemo {
         }
 
         private List<CalculationResult> processData() {
-            //Simulating delay
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
             return List.of(new CalculationResult(Thread.currentThread().getName(), this.name, Arrays.stream(this.score).average().orElse(0)));
         }
     }
@@ -158,5 +154,45 @@ public class ForkJoinDemo {
     }
 
     private record MOBAData(int[] goldDifference, int[] matchesTime, int[] epicMonsters, int[] structuresDestroyed) {
+    }
+
+    private static class QueuePrinter implements ForkJoinPool.ManagedBlocker {
+        private final AtomicInteger pendingResults;
+        private final BlockingQueue<CalculationResult> queue;
+
+        public QueuePrinter(int pendingResults, BlockingQueue<CalculationResult> queue) {
+            this.pendingResults = new AtomicInteger(pendingResults);
+            this.queue = queue;
+        }
+
+        @Override
+        public boolean block() throws InterruptedException {
+            if (this.pendingResults.get() > 0) {
+                System.out.printf("Thread \"%s\" from within ManagedBlocker: \"%s\"%n"
+                        , Thread.currentThread().getName()
+                        , queue.take()
+                );
+
+                this.pendingResults.decrementAndGet();
+            }
+
+            return this.isReleasable();
+        }
+
+        @Override
+        public boolean isReleasable() {
+            return this.pendingResults.get() == 0;
+        }
+    }
+
+    //Runnable used to initialize the ManagedBlocker
+    private static Runnable blockingTaskInitializer(BlockingQueue<CalculationResult> queue) {
+        return () -> {
+            try {
+                ForkJoinPool.managedBlock(new QueuePrinter(4, queue));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        };
     }
 }
