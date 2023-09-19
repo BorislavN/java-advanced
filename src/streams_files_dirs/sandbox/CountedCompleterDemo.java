@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 //An extension of ForkJoinTask, better suited for handling stalling/blocking tasks
 //It has an onCompletion and onExceptionalCompletion callbacks, useful for performing an action after task/subtask completion
+//Can be void or return a value
 public class CountedCompleterDemo {
     public static void main(String[] args) {
         String[] messages = {"message1", "message2", "message3", "message4", "message5", "message6", "message7", "message8", "message9", "message10",};
