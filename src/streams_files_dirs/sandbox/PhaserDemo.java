@@ -42,6 +42,7 @@ public class PhaserDemo {
             this.phaser.arriveAndAwaitAdvance();
             System.out.printf("Phase: %d, data printed.%n", this.phaser.getPhase());
 
+            //when all task are unregistered the phaser is terminated
             this.phaser.arriveAndDeregister();
         }
     }
