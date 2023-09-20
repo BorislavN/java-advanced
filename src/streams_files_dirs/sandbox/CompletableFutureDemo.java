@@ -36,7 +36,7 @@ public class CompletableFutureDemo {
         System.out.println();
 
         //Notice that even though we handle the exception, the future still enters the exceptionally() block
-        boolean future3 = CompletableFuture.supplyAsync(() -> "Not an int :D")
+        CompletableFuture<Void> future3 = CompletableFuture.supplyAsync(() -> "Not an int :D")
                 .thenApply(Integer::parseInt)
                 //When is used to insert a callback function
                 .whenComplete((val, ex) -> {
@@ -62,9 +62,9 @@ public class CompletableFutureDemo {
 
                     return -1;
                 })
-                .thenAccept((v) -> System.out.println("From accept: " + v)).isCompletedExceptionally();
+                .thenAccept((v) -> System.out.println("From accept: " + v));
 
-//        future3.join();
+        future3.join();
 
         System.out.println();
 
@@ -126,5 +126,27 @@ public class CompletableFutureDemo {
                 .thenAccept((v) -> System.out.println("From accept: " + v));
 
         future5.join();
+
+        System.out.println();
+
+        CompletableFuture<Void> future6 = CompletableFuture.supplyAsync(() -> "Sexy boi :D")
+                .thenApply(Integer::parseInt)
+                .whenComplete((val, ex) -> {
+                    if (val == null) {
+                        System.out.println("From when: Value is null!");
+                    }
+
+                    if (ex != null) {
+                        System.out.println("From when: Error!");
+                    }
+                })
+                .thenAccept((v) -> System.out.println("From accept: " + v));
+
+        try {
+            future6.join();
+        } catch (Exception e) {
+            System.out.println("Exception caught in " + Thread.currentThread().getName());
+            System.out.println("Future6 has error: " + future6.isCompletedExceptionally());
+        }
     }
 }
