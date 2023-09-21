@@ -1,6 +1,8 @@
 package streams_files_dirs.sandbox;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 public class CompletableFutureDemo {
     public static void main(String[] args) {
@@ -117,7 +119,6 @@ public class CompletableFutureDemo {
 
                     return CompletableFuture.completedFuture(val).join();
                 })
-                //is executed only when an exception happens
                 .exceptionally((ex) -> {
                     System.out.println("From exceptionally: Error!");
 
@@ -148,5 +149,48 @@ public class CompletableFutureDemo {
             System.out.println("Exception caught in " + Thread.currentThread().getName());
             System.out.println("Future6 has error: " + future6.isCompletedExceptionally());
         }
+
+        System.out.println();
+
+        //Notice that when exceptionally() catches the error, it is not propagated to the handle()
+        //Still, handle() is executed and the value is changed
+        CompletableFuture<Void> future7 = CompletableFuture.supplyAsync(() -> "Not an int :D")
+                .thenApply(Integer::parseInt)
+                .whenComplete((val, ex) -> {
+                    if (val == null) {
+                        System.out.println("From when: Value is null!");
+                    }
+
+                    if (ex != null) {
+                        System.out.println("From when: Error!");
+                    }
+                })
+                .exceptionally((ex) -> {
+                    System.out.println("From exceptionally: Error!");
+
+                    return -1;
+                })
+                .handle((val, ex) -> {
+                    if (ex != null) {
+                        System.out.println("From handler: Error!");
+                    }
+
+                    return val + 8;
+                })
+                .thenAccept((v) -> System.out.println("From accept: " + v));
+
+        future7.join();
+
+        System.out.println();
+
+        CompletableFuture<Void> future8 = CompletableFuture.supplyAsync(() -> "1 2 3 4")
+                .thenApply(v -> v.split(" "))
+                //map to a matrix, the matrix is then warped in CompletableFuture
+                .thenApply(v -> new String[][]{v, v})
+                //flatten to array, compose returns a CompletionStage
+                .thenCompose((val) -> CompletableFuture.completedStage(Stream.concat(Arrays.stream(val[0]), Arrays.stream(val[1])).toArray(String[]::new)))
+                .thenAccept((v) -> System.out.println("From accept: " + Arrays.toString(v)));
+
+        future8.join();
     }
 }
