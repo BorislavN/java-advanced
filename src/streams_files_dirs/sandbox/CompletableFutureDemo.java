@@ -183,6 +183,8 @@ public class CompletableFutureDemo {
 
         System.out.println();
 
+        //Compose is useful, when an api returns CompletableFuture as result
+        //We can pass it on, without unwrapping
         CompletableFuture<Void> future8 = CompletableFuture.supplyAsync(() -> "1 2 3 4")
                 .thenApply(v -> v.split(" "))
                 //map to a matrix, the matrix is then warped in CompletableFuture
