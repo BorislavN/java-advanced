@@ -11,6 +11,10 @@ import java.util.concurrent.ArrayBlockingQueue;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 //Class intended to be used with ServerSocketChanelDemo.java
+//To quit the client, type "/quit"
+//If the socket closes improperly, the InputReader thread will remain blocked, until a line is read
+//Depending on your IDE, starting multiple clients with "right-click -> Run" can throw an exception
+//Because the client isn't starting in a new terminal, but restarting the current client(still connected to the server)
 public class SocketChannelDemo {
     public static void main(String[] args) throws IOException {
         Client client = new Client(8080, 10, 30);
@@ -22,6 +26,7 @@ public class SocketChannelDemo {
         private final SocketChannel client;
         private final int charLimit;
         private final int usernameLimit;
+
 
         public Client(int port, int usernameLimit, int charLimit) throws IOException {
             this.charLimit = charLimit;
@@ -81,7 +86,7 @@ public class SocketChannelDemo {
                     this.client.shutdownOutput();
                     this.client.close();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Oops");
                 }
             }
         }
@@ -96,6 +101,10 @@ public class SocketChannelDemo {
 
         public int getUsernameLimit() {
             return this.usernameLimit;
+        }
+
+        public boolean isRunning() {
+            return this.client.isOpen();
         }
     }
 
@@ -118,6 +127,10 @@ public class SocketChannelDemo {
             try {
                 do {
                     input = this.bufferedReader.readLine();
+
+                    if (!this.client.isRunning()) {
+                        break;
+                    }
 
                     if (input.isBlank()) {
                         System.out.println("Input can't be blank!");

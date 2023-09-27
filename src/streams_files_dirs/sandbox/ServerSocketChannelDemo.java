@@ -17,6 +17,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 //Simple "Chat" :D server
 //Class intended to be used with SocketChanelDemo.java
 //Currently the messages are only printed locally in the server as a log
+//If the server encounters error, it shuts down
 public class ServerSocketChannelDemo {
     public static void main(String[] args) throws IOException {
         Server server = new Server(8080, 30);
