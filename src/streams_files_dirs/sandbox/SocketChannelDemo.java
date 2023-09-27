@@ -1,4 +1,4 @@
-package streams_files_dirs.sandbox.chat_app;
+package streams_files_dirs.sandbox;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -117,7 +117,7 @@ public class SocketChannelDemo {
 
             try {
                 do {
-                    input = bufferedReader.readLine();
+                    input = this.bufferedReader.readLine();
 
                     if (input.isBlank()) {
                         System.out.println("Input can't be blank!");
