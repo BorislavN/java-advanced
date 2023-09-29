@@ -12,28 +12,31 @@ public class ChatUtility {
     public static final int PORT = 8080;
     public static final int MESSAGE_LIMIT = 300;
     public static final int USERNAME_LIMIT = 30;
-    public static final int BUFFER_LIMIT = MESSAGE_LIMIT + USERNAME_LIMIT;
 
-    public static String readMessage(SelectionKey key) throws IOException {
+    public static String readMessage(SelectionKey key) throws IOException, IllegalStateException {
         if (key.isValid()) {
             SocketChannel channel = (SocketChannel) key.channel();
-
             return read(channel);
-
         } else {
             throw new IllegalStateException("Key invalid!");
         }
     }
 
-    public static int writeMessage(SelectionKey key, String message) throws IOException {
+    public static int writeMessage(SelectionKey key, String message) throws IOException, IllegalStateException {
         if (key.isValid()) {
             SocketChannel channel = (SocketChannel) key.channel();
-
             return write(channel, message);
-
         } else {
             throw new IllegalStateException("Key invalid!");
         }
+    }
+
+    public static int writeMessage(SocketChannel channel, String message) throws IOException, IllegalStateException {
+        return write(channel, message);
+    }
+
+    public static String readMessage(SocketChannel channel) throws IOException {
+        return read(channel);
     }
 
     public static String read(SocketChannel channel) throws IOException {
@@ -47,6 +50,11 @@ public class ChatUtility {
         while (bytesRead > 0) {
             output.append(decodeBuffer(buffer.flip()));
             bytesRead = channel.read(buffer.clear());
+        }
+
+        //Check if connection was closed
+        if (bytesRead == -1) {
+            channel.close();
         }
 
         return output.toString();
@@ -65,6 +73,11 @@ public class ChatUtility {
             totalBytes += bytesWritten;
         }
 
+        //Check if connection was closed
+        if (totalBytes == -1) {
+            channel.close();
+        }
+
         return totalBytes;
     }
 
@@ -72,23 +85,21 @@ public class ChatUtility {
         return UTF_8.decode(buffer).toString();
     }
 
-    private static void checkIfSocketIsConnected(SocketChannel channel) {
-        if ((channel.isOpen() && channel.isConnected())) {
+    private static void checkIfSocketIsConnected(SocketChannel channel) throws IllegalStateException {
+        if (!(channel.isOpen() && channel.isConnected())) {
             throw new IllegalStateException("Socket is not open/connected!");
         }
     }
 
-    private static void validateMessage(String message, String type) {
-        if ("incoming".equals(type)) {
-            if (message.length() > MESSAGE_LIMIT) {
-                throw new IllegalArgumentException("Message too long, bytes-limit: " + MESSAGE_LIMIT);
-            }
+    public static String validateUsername(String name) throws IllegalArgumentException {
+        if (name.getBytes().length > USERNAME_LIMIT) {
+            throw new IllegalArgumentException("Username too long!");
         }
 
-        if ("outgoing".equals(type)) {
-            if (message.length() > BUFFER_LIMIT) {
-                throw new IllegalArgumentException("Message too long, bytes-limit: " + BUFFER_LIMIT);
-            }
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Username can not be blank!");
         }
+
+        return name;
     }
 }
