@@ -36,10 +36,10 @@ public class ChatClient implements Runnable {
 
         String message;
 
-        do {
-            message = this.messageQueue.poll();
+        try {
+            do {
+                message = this.messageQueue.poll();
 
-            try {
                 if (message != null) {
                     if (!hasUsername) {
                         this.tempUsername = message;
@@ -56,16 +56,17 @@ public class ChatClient implements Runnable {
                     this.hasUsername = true;
                 }
 
-               if (!response.isBlank()){
-                   System.out.println(response);
-               }
+                if (!response.isBlank()) {
+                    System.out.println(response);
+                }
 
-            } catch (IOException | IllegalStateException e) {
-                System.err.println("Client encountered exception - " + e.getMessage());
-            }
-        } while (!"/quit".equals(message));
+            } while (!"/quit".equals(message));
 
-        this.shutdown();
+        } catch (IOException | IllegalStateException e) {
+            System.err.println("Client encountered exception - " + e.getMessage());
+        } finally {
+            this.shutdown();
+        }
     }
 
     private void shutdown() {

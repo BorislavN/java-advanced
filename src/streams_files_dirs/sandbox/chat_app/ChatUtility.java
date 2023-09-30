@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.SocketChannel;
+import java.util.Set;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -101,5 +102,20 @@ public class ChatUtility {
         }
 
         return name;
+    }
+
+    public static String joinMessage(String message) {
+        return substringMessage(message, 6) + " joined the chat!";
+    }
+
+    public static String leftMessage(SelectionKey key, Set<String> takenNames) {
+        String name = key.attachment() == null ? "Anonymous" : ConnectionAttachment.getUsername(key);
+        takenNames.remove(name);
+
+        return name + " left the chat...";
+    }
+
+    private static String substringMessage(String message, int start) {
+        return message.substring(start);
     }
 }

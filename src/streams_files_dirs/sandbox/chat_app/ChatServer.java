@@ -15,7 +15,7 @@ import static java.nio.channels.SelectionKey.*;
 import static streams_files_dirs.sandbox.chat_app.ChatUtility.*;
 
 //This is supposed to be demo chat-app
-//TODO: Currently has manny bugs, will need serious debuting :D
+//TODO: Currently has manny bugs, will need serious debugging :D
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;
@@ -100,7 +100,7 @@ public class ChatServer implements Runnable {
             }
 
             if (handleSetUsername(key, message)) {
-                message = message.substring(6) + " joined the chat!";
+                message = ChatUtility.joinMessage(message);
             } else {
                 //Add the username before the message
                 message = ConnectionAttachment.getUsername(key) + ": " + message;
@@ -157,10 +157,7 @@ public class ChatServer implements Runnable {
     }
 
     private void removeConnection(SelectionKey key) throws IOException {
-        String name = key.attachment() == null ? "Anonymous" : ConnectionAttachment.getUsername(key);
-        log(name + " left the chat...");
-
-        this.takenUsernames.remove(name);
+        log(ChatUtility.leftMessage(key, this.takenUsernames));
         this.numberOfConnections--;
 
         this.closeChannel(key);

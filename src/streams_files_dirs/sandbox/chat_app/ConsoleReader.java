@@ -36,7 +36,7 @@ public class ConsoleReader implements Runnable {
 
                 this.pendingMessages.offer(input);
 
-            } while ("/quit".equals(input));
+            } while (!"/quit".equals(input));
 
         } catch (IOException e) {
             System.err.println("ConsoleReader encountered an exception - " + e.getMessage());
