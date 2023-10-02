@@ -17,10 +17,6 @@ public class ConnectionAttachment {
         return this.pendingMessages.offer(message);
     }
 
-    public boolean queueIsEmpty() {
-        return this.pendingMessages.isEmpty();
-    }
-
     public String getName() {
         return this.username;
     }
@@ -37,49 +33,45 @@ public class ConnectionAttachment {
         return this.pendingMessages.peek();
     }
 
-    public static boolean setUsername(SelectionKey key, String name) throws IllegalArgumentException, IllegalStateException {
-        if (key.attachment() != null) {
-            ((ConnectionAttachment) key.attachment()).setUsername(ChatUtility.validateUsername(name));
+    public static void setUsername(SelectionKey key, String name) throws IllegalStateException,IllegalArgumentException {
+        checkIfAttachmentIsValid(key);
 
-            return true;
-        }
-
-        throw new IllegalStateException("Attachment is null!");
+        ((ConnectionAttachment) key.attachment()).setUsername(ChatUtility.validateUsername(name));
     }
 
     public static boolean enqueueMessage(SelectionKey key, String message) throws IllegalStateException {
-        if (key.attachment() != null) {
-            ConnectionAttachment attachment = (ConnectionAttachment) key.attachment();
+        checkIfAttachmentIsValid(key);
+        ConnectionAttachment attachment = (ConnectionAttachment) key.attachment();
 
-            return attachment.enqueueMessage(message);
-        }
-
-        throw new IllegalStateException("Attachment is null!");
+        return attachment.enqueueMessage(message);
     }
 
     public static String pollMessage(SelectionKey key) throws IllegalStateException {
-        if (key.attachment() != null) {
-            ConnectionAttachment attachment = (ConnectionAttachment) key.attachment();
-            return attachment.pollMessage();
-        }
+        checkIfAttachmentIsValid(key);
+        ConnectionAttachment attachment = (ConnectionAttachment) key.attachment();
 
-        throw new IllegalStateException("Attachment is null!");
+        return attachment.pollMessage();
+
     }
 
     public static String peekMessage(SelectionKey key) throws IllegalStateException {
-        if (key.attachment() != null) {
-            ConnectionAttachment attachment = (ConnectionAttachment) key.attachment();
-            return attachment.peekMessage();
-        }
+        checkIfAttachmentIsValid(key);
+        ConnectionAttachment attachment = (ConnectionAttachment) key.attachment();
 
-        throw new IllegalStateException("Attachment is null!");
+        return attachment.peekMessage();
     }
 
     public static String getUsername(SelectionKey key) throws IllegalStateException {
-        if (key.attachment() != null) {
-            return ((ConnectionAttachment) key.attachment()).getName();
-        }
+        checkIfAttachmentIsValid(key);
 
-        throw new IllegalStateException("Trying to get username while attachment is null!");
+        String name = ((ConnectionAttachment) key.attachment()).getName();
+
+        return name == null ? "Anonymous" : name;
+    }
+
+    private static void checkIfAttachmentIsValid(SelectionKey key) {
+        if (key.attachment() == null) {
+            throw new IllegalStateException("SelectionKey attachment is Null!");
+        }
     }
 }

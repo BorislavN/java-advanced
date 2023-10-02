@@ -45,15 +45,15 @@ public class ChatServer implements Runnable {
                 //Check writeSelector for events
                 checkSelectorForEvents(this.writeSelector, "write");
 
-            } catch (IOException | IllegalArgumentException e) {
-                System.err.println("Server encountered an Exception - " + e.getMessage());
+            } catch (IOException e) {
+                this.logError("Server encountered an Exception", e);
             }
         }
 
         this.shutdown();
     }
 
-    private void checkSelectorForEvents(Selector selector, String type) throws IOException, IllegalArgumentException {
+    private void checkSelectorForEvents(Selector selector, String type) throws IOException {
         Iterator<SelectionKey> iterator = this.getReadySet(selector);
 
         while (iterator != null && iterator.hasNext()) {
@@ -68,15 +68,17 @@ public class ChatServer implements Runnable {
                 if ("write".equals(type)) {
                     this.handlePendingMessages(key);
                 }
-            } catch (SocketException e) {
-                key.cancel();
+            } catch (IllegalArgumentException e) {
+                ChatUtility.writeMessage(key, e.getMessage());
+            } catch (SocketException | IllegalStateException e) {
+                this.removeConnection(key);
             }
 
             iterator.remove();
         }
     }
 
-    private void handleConnection(SelectionKey key) throws IOException, IllegalArgumentException {
+    private void handleConnection(SelectionKey key) throws IOException, IllegalStateException {
         if (key.isValid() && key.isAcceptable()) {
             SocketChannel connection = this.server.accept();
 
@@ -86,12 +88,12 @@ public class ChatServer implements Runnable {
 
                 connection.register(this.mainSelector, OP_READ, new ConnectionAttachment());
 
-                ChatUtility.writeMessage(connection, "Welcome, type \"/user {name}\" to choose a username.");
+                ChatUtility.writeMessage(connection, "Welcome! Please choose a username.");
             }
         }
     }
 
-    private void handleIncomingData(SelectionKey key) throws IOException, IllegalArgumentException {
+    private void handleIncomingData(SelectionKey key) throws IOException, IllegalArgumentException, IllegalStateException {
         if (key.isValid() && key.isReadable()) {
             String message = ChatUtility.readMessage(key);
 
@@ -102,7 +104,6 @@ public class ChatServer implements Runnable {
             if (this.handleSetUsername(key, message)) {
                 message = ChatUtility.joinMessage(message);
             } else {
-                //Add the username before the message
                 message = ConnectionAttachment.getUsername(key) + ": " + message;
             }
 
@@ -124,7 +125,7 @@ public class ChatServer implements Runnable {
     }
 
 
-    private void handlePendingMessages(SelectionKey key) throws IOException, IllegalArgumentException {
+    private void handlePendingMessages(SelectionKey key) throws IOException, IllegalStateException {
         if (key.isValid() && key.isWritable()) {
             String message = ConnectionAttachment.peekMessage(key);
 
@@ -145,35 +146,45 @@ public class ChatServer implements Runnable {
 
     private boolean handleQuit(SelectionKey key, String message) throws IOException {
         if (message != null && message.startsWith("/quit")) {
-            this.log(ChatUtility.leftMessage(key, this.takenUsernames));
-
-            key.cancel();
-            key.channel().close();
-
+            this.removeConnection(key);
             return true;
         }
 
         return false;
     }
 
-    private boolean handleSetUsername(SelectionKey key, String message) throws IOException, IllegalArgumentException {
+    private void removeConnection(SelectionKey key) throws IOException {
+        this.log(ChatUtility.leftMessage(key, this.takenUsernames));
+
+        key.cancel();
+        key.channel().close();
+    }
+
+    //TODO: Need to make it so when an user changes his username, a message is send
+    private boolean handleSetUsername(SelectionKey key, String message) throws IOException, IllegalStateException, IllegalArgumentException {
         if (message != null && message.startsWith("/user")) {
             //Substring only the username
             message = ChatUtility.substringMessage(message, 6);
+            String currentName = ConnectionAttachment.getUsername(key);
 
-            if (this.takenUsernames.contains(message)) {
+            if (message.equals(currentName)) {
+                ChatUtility.writeMessage(key, message + " already is your username!");
+            }
+
+            if (this.takenUsernames.contains(message) || "Anonymous".equalsIgnoreCase(message)) {
+                ChatUtility.writeMessage(key, message + " is already taken!");
+            }
+
+            if (this.takenUsernames.contains(message) || "Anonymous".equalsIgnoreCase(message)) {
                 //Inform client that the name is taken
                 ChatUtility.writeMessage(key, message + " is already taken!");
-            } else {
-                //Set the username in the attachment
-                boolean wasSet = ConnectionAttachment.setUsername(key, message);
-
-                if (wasSet) {
-                    this.takenUsernames.add(message);
-
-                    return true;
-                }
             }
+
+            //Set the username in the attachment
+            ConnectionAttachment.setUsername(key, message);
+            this.takenUsernames.add(message);
+
+            return true;
         }
 
         return false;
@@ -187,7 +198,7 @@ public class ChatServer implements Runnable {
             this.writeSelector.close();
             this.server.close();
         } catch (IOException e) {
-            System.err.println("Exception happened while server shutdown - " + e.getMessage());
+            this.logError("Exception happened while server shutdown", e);
         }
     }
 
@@ -211,9 +222,11 @@ public class ChatServer implements Runnable {
     }
 
     private void log(String message) {
-        LocalTime time = LocalTime.now();
-
         System.out.printf("[%1$tH:%1$tM] Server log - %2$s%n", LocalTime.now(), message);
+    }
+
+    private void logError(String message, Throwable error) {
+        System.err.printf("[%1$tH:%1$tM] Server log - \"%2$s - %3$s\"%n", LocalTime.now(), message, error.getMessage());
     }
 
     public static void main(String[] args) throws IOException {

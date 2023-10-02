@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Queue;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static streams_files_dirs.sandbox.chat_app.ChatUtility.MESSAGE_LIMIT;
 
 public class ConsoleReader implements Runnable {
     private final BufferedReader bufferedReader;
@@ -29,7 +28,7 @@ public class ConsoleReader implements Runnable {
                     continue;
                 }
 
-                if (input.getBytes(UTF_8).length > MESSAGE_LIMIT) {
+                if (input.getBytes(UTF_8).length > ChatUtility.MESSAGE_LIMIT) {
                     System.out.println("Input too long!");
                     continue;
                 }
@@ -40,7 +39,6 @@ public class ConsoleReader implements Runnable {
 
         } catch (IOException e) {
             System.err.println("ConsoleReader encountered an exception - " + e.getMessage());
-            Thread.currentThread().interrupt();
         }
     }
 }

@@ -15,34 +15,30 @@ public class ChatUtility {
     public static final int USERNAME_LIMIT = 30;
 
     public static String readMessage(SelectionKey key) throws IOException, IllegalStateException {
-        if (key.isValid()) {
-            SocketChannel channel = (SocketChannel) key.channel();
-            return read(channel);
-        } else {
-            throw new IllegalStateException("Key invalid!");
-        }
+        checkIfKeyIsValid(key);
+
+        return readMessage((SocketChannel) key.channel());
     }
 
     public static int writeMessage(SelectionKey key, String message) throws IOException, IllegalStateException {
-        if (key.isValid()) {
-            SocketChannel channel = (SocketChannel) key.channel();
-            return write(channel, message);
-        } else {
-            throw new IllegalStateException("Key invalid!");
-        }
+        checkIfKeyIsValid(key);
+
+        return writeMessage((SocketChannel) key.channel(), message);
     }
 
     public static int writeMessage(SocketChannel channel, String message) throws IOException, IllegalStateException {
+        checkIfSocketIsConnected(channel);
+
         return write(channel, message);
     }
 
-    public static String readMessage(SocketChannel channel) throws IOException {
+    public static String readMessage(SocketChannel channel) throws IOException, IllegalStateException {
+        checkIfSocketIsConnected(channel);
+
         return read(channel);
     }
 
-    public static String read(SocketChannel channel) throws IOException {
-        checkIfSocketIsConnected(channel);
-
+    private static String read(SocketChannel channel) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_LIMIT);
         StringBuilder output = new StringBuilder();
 
@@ -61,9 +57,7 @@ public class ChatUtility {
         return output.toString();
     }
 
-    public static int write(SocketChannel channel, String message) throws IOException {
-        checkIfSocketIsConnected(channel);
-
+    private static int write(SocketChannel channel, String message) throws IOException {
         ByteBuffer buffer = ByteBuffer.wrap(message.getBytes(UTF_8));
 
         int bytesWritten = channel.write(buffer);
@@ -87,8 +81,14 @@ public class ChatUtility {
     }
 
     private static void checkIfSocketIsConnected(SocketChannel channel) throws IllegalStateException {
-        if (!(channel.isOpen() && channel.isConnected())) {
-            throw new IllegalStateException("Socket is not open/connected!");
+        if (!channel.isConnected()) {
+            throw new IllegalStateException("SocketChannel is not connected!");
+        }
+    }
+
+    private static void checkIfKeyIsValid(SelectionKey key) throws IllegalStateException {
+        if (!key.isValid()) {
+            throw new IllegalStateException("SelectionKey invalid!");
         }
     }
 
@@ -109,13 +109,18 @@ public class ChatUtility {
     }
 
     public static String leftMessage(SelectionKey key, Set<String> takenNames) {
-        String name = key.attachment() == null ? "Anonymous" : ConnectionAttachment.getUsername(key);
+        String name = ConnectionAttachment.getUsername(key);
+        //Remove username
         takenNames.remove(name);
 
         return name + " left the chat...";
     }
 
-    public static String substringMessage(String message, int start) {
-        return message.substring(start);
+    public static String substringMessage(String message, int start) throws IllegalArgumentException {
+        try {
+            return message.substring(start);
+        } catch (IndexOutOfBoundsException e) {
+            throw new IllegalArgumentException("Invalid username!");
+        }
     }
 }
