@@ -2,35 +2,34 @@ package streams_files_dirs.sandbox.chat_app;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.SocketException;
 import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.time.LocalTime;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static java.nio.channels.SelectionKey.*;
-import static streams_files_dirs.sandbox.chat_app.ChatUtility.*;
 
-//This is supposed to be demo chat-app
-//TODO: Currently has manny bugs, will need serious debugging :D
+//Use "/user {name}" to choose a username
+//Use "/quit" to quit
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;
     private final Selector writeSelector;
     private final Set<String> takenUsernames;
-    private long numberOfConnections;
     private boolean receivedAConnection;
 
     public ChatServer() throws IOException {
         this.server = ServerSocketChannel.open();
-        this.server.bind(new InetSocketAddress(HOST, PORT));
+        this.server.bind(new InetSocketAddress(ChatUtility.HOST, ChatUtility.PORT));
         this.mainSelector = Selector.open();
         this.writeSelector = Selector.open();
         this.takenUsernames = new HashSet<>();
-        this.numberOfConnections = 0;
         this.receivedAConnection = false;
 
         this.server.configureBlocking(false);
@@ -41,27 +40,12 @@ public class ChatServer implements Runnable {
     public void run() {
         while (this.hasConnections()) {
             try {
-                Iterator<SelectionKey> mainIterator = getReadySet(this.mainSelector);
+                //Check mainSelector for events
+                checkSelectorForEvents(this.mainSelector, "read");
+                //Check writeSelector for events
+                checkSelectorForEvents(this.writeSelector, "write");
 
-                while (mainIterator != null && mainIterator.hasNext()) {
-                    SelectionKey key = mainIterator.next();
-
-                    this.handleConnection(key);
-                    this.handleIncomingData(key);
-
-                    mainIterator.remove();
-                }
-
-                Iterator<SelectionKey> writableIterator = getReadySet(this.writeSelector);
-
-                while (writableIterator != null && writableIterator.hasNext()) {
-                    SelectionKey key = writableIterator.next();
-
-                    this.handlePendingMessages(key);
-
-                    writableIterator.remove();
-                }
-            } catch (IOException | IllegalStateException | IllegalArgumentException e) {
+            } catch (IOException | IllegalArgumentException e) {
                 System.err.println("Server encountered an Exception - " + e.getMessage());
             }
         }
@@ -69,37 +53,53 @@ public class ChatServer implements Runnable {
         this.shutdown();
     }
 
-    private void handleConnection(SelectionKey key) throws IOException {
+    private void checkSelectorForEvents(Selector selector, String type) throws IOException, IllegalArgumentException {
+        Iterator<SelectionKey> iterator = this.getReadySet(selector);
+
+        while (iterator != null && iterator.hasNext()) {
+            SelectionKey key = iterator.next();
+
+            try {
+                if ("read".equals(type)) {
+                    this.handleConnection(key);
+                    this.handleIncomingData(key);
+                }
+
+                if ("write".equals(type)) {
+                    this.handlePendingMessages(key);
+                }
+            } catch (SocketException e) {
+                key.cancel();
+            }
+
+            iterator.remove();
+        }
+    }
+
+    private void handleConnection(SelectionKey key) throws IOException, IllegalArgumentException {
         if (key.isValid() && key.isAcceptable()) {
             SocketChannel connection = this.server.accept();
 
             if (connection != null) {
                 connection.configureBlocking(false);
-                this.numberOfConnections++;
+                this.receivedAConnection = true;
 
                 connection.register(this.mainSelector, OP_READ, new ConnectionAttachment());
 
-                writeMessage(connection, "Please enter a username:");
+                ChatUtility.writeMessage(connection, "Welcome, type \"/user {name}\" to choose a username.");
             }
         }
     }
 
-    private void handleIncomingData(SelectionKey key) throws IOException, IllegalStateException, IllegalArgumentException {
-        //If fore some reason the key is invalid, remove the connection
-        if (!key.isValid()) {
-            this.removeConnection(key);
+    private void handleIncomingData(SelectionKey key) throws IOException, IllegalArgumentException {
+        if (key.isValid() && key.isReadable()) {
+            String message = ChatUtility.readMessage(key);
 
-            return;
-        }
-
-        if (key.isReadable()) {
-            String message = readMessage(key);
-
-            if (handleQuit(key, message)) {
+            if (this.handleQuit(key, message)) {
                 return;
             }
 
-            if (handleSetUsername(key, message)) {
+            if (this.handleSetUsername(key, message)) {
                 message = ChatUtility.joinMessage(message);
             } else {
                 //Add the username before the message
@@ -107,22 +107,24 @@ public class ChatServer implements Runnable {
             }
 
             this.log(message);
+            this.enqueueMessage(message);
+        }
+    }
 
-            //Add the message to the pending lists, and register the channels in the writeSelector
-            for (SelectionKey connection : this.getAllConnections()) {
-                if (connection.isValid()) {
-                    SocketChannel channel = (SocketChannel) connection.channel();
+    //Add the message to the pending lists, and register the channels in the writeSelector
+    private void enqueueMessage(String message) throws IOException {
+        for (SelectionKey connection : this.getAllConnections()) {
+            if (connection.isValid()) {
+                SocketChannel channel = (SocketChannel) connection.channel();
+                channel.register(this.writeSelector, OP_WRITE, connection.attachment());
 
-                    ConnectionAttachment.enqueueMessage(connection, message);
-
-                    channel.register(this.writeSelector, OP_WRITE, connection.attachment());
-                }
+                ConnectionAttachment.enqueueMessage(connection, message);
             }
         }
     }
 
 
-    private void handlePendingMessages(SelectionKey key) throws IOException, IllegalStateException {
+    private void handlePendingMessages(SelectionKey key) throws IOException, IllegalArgumentException {
         if (key.isValid() && key.isWritable()) {
             String message = ConnectionAttachment.peekMessage(key);
 
@@ -132,7 +134,7 @@ public class ChatServer implements Runnable {
                 return;
             }
 
-            int bytesWritten = writeMessage(key, message);
+            int bytesWritten = ChatUtility.writeMessage(key, message);
 
             //If write succeeded poll the message
             if (bytesWritten != 0) {
@@ -141,9 +143,12 @@ public class ChatServer implements Runnable {
         }
     }
 
-    private boolean handleQuit(SelectionKey key, String message) throws IOException, IllegalStateException {
+    private boolean handleQuit(SelectionKey key, String message) throws IOException {
         if (message != null && message.startsWith("/quit")) {
-            this.removeConnection(key);
+            this.log(ChatUtility.leftMessage(key, this.takenUsernames));
+
+            key.cancel();
+            key.channel().close();
 
             return true;
         }
@@ -151,26 +156,16 @@ public class ChatServer implements Runnable {
         return false;
     }
 
-    private void closeChannel(SelectionKey key) throws IOException {
-        key.cancel();
-        key.channel().close();
-    }
-
-    private void removeConnection(SelectionKey key) throws IOException {
-        log(ChatUtility.leftMessage(key, this.takenUsernames));
-        this.numberOfConnections--;
-
-        this.closeChannel(key);
-    }
-
-
-    private boolean handleSetUsername(SelectionKey key, String message) throws IllegalArgumentException, IllegalStateException, IOException {
+    private boolean handleSetUsername(SelectionKey key, String message) throws IOException, IllegalArgumentException {
         if (message != null && message.startsWith("/user")) {
-            message = message.substring(6);
+            //Substring only the username
+            message = ChatUtility.substringMessage(message, 6);
 
             if (this.takenUsernames.contains(message)) {
-                writeMessage(key, message + " is already taken!");
+                //Inform client that the name is taken
+                ChatUtility.writeMessage(key, message + " is already taken!");
             } else {
+                //Set the username in the attachment
                 boolean wasSet = ConnectionAttachment.setUsername(key, message);
 
                 if (wasSet) {
@@ -185,7 +180,6 @@ public class ChatServer implements Runnable {
     }
 
     public void shutdown() {
-        this.numberOfConnections = 0;
         this.receivedAConnection = true;
 
         try {
@@ -209,7 +203,7 @@ public class ChatServer implements Runnable {
     }
 
     private boolean hasConnections() {
-        return this.numberOfConnections > 0 || !this.receivedAConnection;
+        return !this.getAllConnections().isEmpty() || !this.receivedAConnection;
     }
 
     private Set<SelectionKey> getAllConnections() {
@@ -217,7 +211,9 @@ public class ChatServer implements Runnable {
     }
 
     private void log(String message) {
-        System.out.printf("Server log - %s%n", message);
+        LocalTime time = LocalTime.now();
+
+        System.out.printf("[%1$tH:%1$tM] Server log - %2$s%n", LocalTime.now(), message);
     }
 
     public static void main(String[] args) throws IOException {

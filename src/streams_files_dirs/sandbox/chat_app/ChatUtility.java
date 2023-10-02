@@ -115,7 +115,7 @@ public class ChatUtility {
         return name + " left the chat...";
     }
 
-    private static String substringMessage(String message, int start) {
+    public static String substringMessage(String message, int start) {
         return message.substring(start);
     }
 }

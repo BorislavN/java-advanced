@@ -11,6 +11,11 @@ import java.util.concurrent.ArrayBlockingQueue;
 import static streams_files_dirs.sandbox.chat_app.ChatUtility.HOST;
 import static streams_files_dirs.sandbox.chat_app.ChatUtility.PORT;
 
+//To connect multiple clients to the server, just compile the files
+//Build/Compile the classes
+//Then open a few terminals and type this command
+//java -cp "C:\Users\User\Desktop\Java Advanced Exercise\out\production\Java Advanced Exercise" streams_files_dirs.sandbox.chat_app.ChatClient
+//Without specifying the classpath I was getting ClasNotFound Exception
 public class ChatClient implements Runnable {
     private final SocketChannel client;
     private final Queue<String> messageQueue;
@@ -60,7 +65,7 @@ public class ChatClient implements Runnable {
                     System.out.println(response);
                 }
 
-            } while (!"/quit".equals(message));
+            } while (!"/quit".equals(message) && readerThread.isAlive());
 
         } catch (IOException | IllegalStateException e) {
             System.err.println("Client encountered exception - " + e.getMessage());
