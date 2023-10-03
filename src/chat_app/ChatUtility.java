@@ -1,4 +1,4 @@
-package streams_files_dirs.sandbox.chat_app;
+package chat_app;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -105,7 +105,15 @@ public class ChatUtility {
     }
 
     public static String joinMessage(String message) {
-        return substringMessage(message, 6) + " joined the chat!";
+        if (message.startsWith("/user")) {
+            return substringMessage(message, 6) + " joined the chat!";
+        }
+
+        return message + " joined the chat!";
+    }
+
+    public static String prependUsername(SelectionKey key, String message) {
+        return String.format("%s: %s", ConnectionAttachment.getUsername(key), message);
     }
 
     public static String leftMessage(SelectionKey key, Set<String> takenNames) {

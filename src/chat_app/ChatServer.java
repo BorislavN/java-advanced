@@ -1,4 +1,4 @@
-package streams_files_dirs.sandbox.chat_app;
+package chat_app;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -101,14 +101,12 @@ public class ChatServer implements Runnable {
                 return;
             }
 
-            if (this.handleSetUsername(key, message)) {
-                message = ChatUtility.joinMessage(message);
-            } else {
-                message = ConnectionAttachment.getUsername(key) + ": " + message;
-            }
+            message = this.handleSetUsername(key, message);
 
-            this.log(message);
-            this.enqueueMessage(message);
+            if (message != null) {
+                this.log(message);
+                this.enqueueMessage(message);
+            }
         }
     }
 
@@ -160,34 +158,52 @@ public class ChatServer implements Runnable {
         key.channel().close();
     }
 
-    //TODO: Need to make it so when an user changes his username, a message is send
-    private boolean handleSetUsername(SelectionKey key, String message) throws IOException, IllegalStateException, IllegalArgumentException {
+    private String handleSetUsername(SelectionKey key, String message) throws IOException, IllegalStateException, IllegalArgumentException {
+        //If the message starts with "/user"
         if (message != null && message.startsWith("/user")) {
-            //Substring only the username
             message = ChatUtility.substringMessage(message, 6);
             String currentName = ConnectionAttachment.getUsername(key);
 
+            //If current name and new name match
             if (message.equals(currentName)) {
                 ChatUtility.writeMessage(key, message + " already is your username!");
+
+                return null;
             }
 
-            if (this.takenUsernames.contains(message) || "Anonymous".equalsIgnoreCase(message)) {
+            //If the username is taken
+            if (this.takenUsernames.contains(message)) {
                 ChatUtility.writeMessage(key, message + " is already taken!");
+
+                return null;
             }
 
-            if (this.takenUsernames.contains(message) || "Anonymous".equalsIgnoreCase(message)) {
-                //Inform client that the name is taken
-                ChatUtility.writeMessage(key, message + " is already taken!");
+            //If the user has a username and the new one is not taken
+            if (!"Anonymous".equals(currentName) && !this.takenUsernames.contains(message)) {
+                this.takenUsernames.remove(currentName);
+                this.takenUsernames.add(message);
+
+                ConnectionAttachment.setUsername(key, message);
+
+                return String.format("%s changed their name to %s.", currentName, message);
             }
 
-            //Set the username in the attachment
-            ConnectionAttachment.setUsername(key, message);
-            this.takenUsernames.add(message);
+            //If the user doesn't have a username and it is free
+            if ("Anonymous".equals(currentName) && !this.takenUsernames.contains(message)) {
+                ConnectionAttachment.setUsername(key, message);
+                this.takenUsernames.add(message);
 
-            return true;
+                return ChatUtility.joinMessage(message);
+            }
         }
 
-        return false;
+        //If the message does not start with "/user"
+        if (message != null) {
+            return ChatUtility.prependUsername(key, message);
+        }
+
+        //If the final case, we return null
+        return null;
     }
 
     public void shutdown() {

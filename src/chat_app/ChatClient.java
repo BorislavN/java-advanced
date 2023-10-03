@@ -1,4 +1,4 @@
-package streams_files_dirs.sandbox.chat_app;
+package chat_app;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 //To connect multiple clients to the server, just compile the files
 //Build/Compile the classes
 //Then open a few terminals and type this command
-//java -cp "C:\Users\User\Desktop\Java Advanced Exercise\out\production\Java Advanced Exercise" streams_files_dirs.sandbox.chat_app.ChatClient
+//java -cp "C:\Users\User\Desktop\Java Advanced Exercise\out\production\Java Advanced Exercise" chat_app.ChatClient
 //Without specifying the classpath I was getting ClasNotFound Exception
 public class ChatClient implements Runnable {
     private final SocketChannel client;

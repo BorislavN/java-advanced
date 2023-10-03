@@ -1,4 +1,4 @@
-package streams_files_dirs.sandbox.chat_app;
+package chat_app;
 
 import java.io.BufferedReader;
 import java.io.IOException;
