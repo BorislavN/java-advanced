@@ -17,6 +17,8 @@ import static java.nio.channels.SelectionKey.*;
 
 //Use "/user {name}" to choose a username
 //Use "/quit" to quit
+
+//TODO:  user-left message does not show up, after quitting
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;
@@ -97,11 +99,11 @@ public class ChatServer implements Runnable {
         if (key.isValid() && key.isReadable()) {
             String message = ChatUtility.readMessage(key);
 
-            if (this.handleQuit(key, message)) {
+            if (this.checkForQuitCommand(key, message)) {
                 return;
             }
 
-            message = this.handleSetUsername(key, message);
+            message = this.checkForSetUsernameCommand(key, message);
 
             if (message != null) {
                 this.log(message);
@@ -142,7 +144,7 @@ public class ChatServer implements Runnable {
         }
     }
 
-    private boolean handleQuit(SelectionKey key, String message) throws IOException {
+    private boolean checkForQuitCommand(SelectionKey key, String message) throws IOException {
         if (message != null && message.startsWith("/quit")) {
             this.removeConnection(key);
             return true;
@@ -152,57 +154,61 @@ public class ChatServer implements Runnable {
     }
 
     private void removeConnection(SelectionKey key) throws IOException {
-        this.log(ChatUtility.leftMessage(key, this.takenUsernames));
+        String message = ChatUtility.leftMessage(key, this.takenUsernames);
 
         key.cancel();
         key.channel().close();
+
+        this.log(message);
+        this.enqueueMessage(message);
     }
 
-    private String handleSetUsername(SelectionKey key, String message) throws IOException, IllegalStateException, IllegalArgumentException {
-        //If the message starts with "/user"
-        if (message != null && message.startsWith("/user")) {
-            message = ChatUtility.substringMessage(message, 6);
-            String currentName = ConnectionAttachment.getUsername(key);
-
-            //If current name and new name match
-            if (message.equals(currentName)) {
-                ChatUtility.writeMessage(key, message + " already is your username!");
-
-                return null;
-            }
-
-            //If the username is taken
-            if (this.takenUsernames.contains(message)) {
-                ChatUtility.writeMessage(key, message + " is already taken!");
-
-                return null;
-            }
-
-            //If the user has a username and the new one is not taken
-            if (!"Anonymous".equals(currentName) && !this.takenUsernames.contains(message)) {
-                this.takenUsernames.remove(currentName);
-                this.takenUsernames.add(message);
-
-                ConnectionAttachment.setUsername(key, message);
-
-                return String.format("%s changed their name to %s.", currentName, message);
-            }
-
-            //If the user doesn't have a username and it is free
-            if ("Anonymous".equals(currentName) && !this.takenUsernames.contains(message)) {
-                ConnectionAttachment.setUsername(key, message);
-                this.takenUsernames.add(message);
-
-                return ChatUtility.joinMessage(message);
-            }
-        }
-
-        //If the message does not start with "/user"
+    private String checkForSetUsernameCommand(SelectionKey key, String message) throws IOException, IllegalStateException, IllegalArgumentException {
         if (message != null) {
+
+            //If the message starts with "/user"
+            if (message.startsWith("/user")) {
+                message = ChatUtility.substringMessage(message, 6);
+                String currentName = ConnectionAttachment.getUsername(key);
+
+                //If current name and new name match
+                if (message.equals(currentName)) {
+                    ChatUtility.writeMessage(key, message + " already is your username!");
+
+                    return null;
+                }
+
+                //If the username is taken
+                if (this.takenUsernames.contains(message)) {
+                    ChatUtility.writeMessage(key, message + " is already taken!");
+
+                    return null;
+                }
+
+                //If the user has a username and the new one is not taken
+                if (!"Anonymous".equals(currentName) && !this.takenUsernames.contains(message)) {
+                    this.takenUsernames.remove(currentName);
+                    this.takenUsernames.add(message);
+
+                    ConnectionAttachment.setUsername(key, message);
+
+                    return String.format("%s changed their name to %s.", currentName, message);
+                }
+
+                //If the user doesn't have a username and it is free
+                if ("Anonymous".equals(currentName) && !this.takenUsernames.contains(message)) {
+                    ConnectionAttachment.setUsername(key, message);
+                    this.takenUsernames.add(message);
+
+                    return ChatUtility.joinMessage(message);
+                }
+            }
+
+            //If it does not contain "/user", prepend the username
             return ChatUtility.prependUsername(key, message);
         }
 
-        //If the final case, we return null
+        //If the message was null, return null
         return null;
     }
 
