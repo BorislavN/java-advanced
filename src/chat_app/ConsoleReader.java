@@ -23,6 +23,11 @@ public class ConsoleReader implements Runnable {
             do {
                 input = this.bufferedReader.readLine();
 
+                //Break - because the end of the stream was reached
+                if(input==null){
+                    break;
+                }
+
                 if (input.isBlank()) {
                     System.out.println("Input can not be blank!");
                     continue;

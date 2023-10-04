@@ -10,6 +10,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 //To choose a username type "/user {name}"
 //To quit type "/quit"
+//Without entering an username, all messages you write will be listed a from "Anonymous"
 
 //To connect multiple clients to the server, just compile the files
 //Build/Compile the classes

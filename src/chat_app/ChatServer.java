@@ -145,7 +145,10 @@ public class ChatServer implements Runnable {
     }
 
     private boolean checkForQuitCommand(SelectionKey key, String message) throws IOException {
-        if (message != null && message.startsWith("/quit")) {
+        //Because the client does not permit sending empty messages, the only way we
+        //received an empty string is - if the client was terminated abruptly
+        //We want this termination to be logged, so we add the "isEmpty" clause
+        if (message != null && (message.startsWith("/quit") || message.isEmpty())) {
             this.removeConnection(key);
             return true;
         }
