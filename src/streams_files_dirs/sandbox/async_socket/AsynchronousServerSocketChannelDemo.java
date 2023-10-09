@@ -9,6 +9,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+//TODO: server shutdowns without any reason, probably something to do with the connections set
+//From time to time a concurrent modification exception is thrown
+//Probably sometimes the new connection is not added, and the set stays empty, causing the condition to break out of the loop
 public class AsynchronousServerSocketChannelDemo {
     public static final String HOST = "localhost";
     public static final int PORT = 6969;
@@ -43,8 +46,12 @@ public class AsynchronousServerSocketChannelDemo {
                 }
 
                 //Clear the closed connections
-                this.removeConnections();
+                if (this.receivedAConnection) {
+                    this.removeConnections();
+                }
             }
+
+            Attachment.closeChannel(this.server);
         }
 
         public void addConnection(Attachment attachment) {
@@ -91,23 +98,23 @@ public class AsynchronousServerSocketChannelDemo {
                 Attachment.logMessage(attachment.decodeMessage());
             }
 
-            //Signal read has finished
-            attachment.setInRead(false);
-
             //Close channel if end of stream
             attachment.closeIfEndOfStream(result);
+
+            //Signal read has finished
+            attachment.setInRead(false);
         }
 
         @Override
         public void failed(Throwable exc, Attachment attachment) {
+            Attachment.closeChannel(attachment.getChannel());
+
             Attachment.logError("Read failed", exc);
+
+            attachment.setInRead(false);
         }
     }
 
-    //
-//    private static class WriteHandler implements CompletionHandler<AsynchronousSocketChannel, Server> {
-//
-//    }
     public static void main(String[] args) throws IOException {
         Server server = new Server();
         server.run();

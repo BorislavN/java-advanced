@@ -3,13 +3,14 @@ package streams_files_dirs.sandbox.async_socket;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
+import java.nio.channels.Channel;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Attachment {
     public static final int LIMIT = 512;
-    private static final AtomicInteger ID = new AtomicInteger(1);
+    private static final AtomicInteger ID = new AtomicInteger(0);
     private final Object lock;
     private final String name;
     private final AsynchronousSocketChannel channel;
@@ -20,7 +21,7 @@ public class Attachment {
 
     public Attachment(AsynchronousSocketChannel channel) {
         this.lock = new Object();
-        this.name = "connection" + ID.getAndIncrement();
+        this.name = "connection" + ID.incrementAndGet();
         this.channel = channel;
         this.inRead = false;
         this.inWrite = false;
@@ -65,13 +66,9 @@ public class Attachment {
 
     public void closeIfEndOfStream(int result) {
         if (result == -1) {
-            try {
-                System.out.println("Closing channel, end of stream reached...");
+            System.out.println("Closing channel, end of stream reached...");
 
-                this.channel.close();
-            } catch (IOException e) {
-                Attachment.logError("Channel failed to close", e);
-            }
+            Attachment.closeChannel(this.channel);
         }
     }
 
@@ -112,5 +109,13 @@ public class Attachment {
 
     public static void logMessage(String message) {
         System.out.printf("[%1$tH:%1$tM] Log - \"%2$s\"%n", LocalTime.now(), message);
+    }
+
+    public static void closeChannel(Channel channel) {
+        try {
+            channel.close();
+        } catch (IOException e) {
+            logError("Channel failed to close", e);
+        }
     }
 }

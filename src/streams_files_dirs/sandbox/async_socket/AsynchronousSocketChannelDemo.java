@@ -42,33 +42,34 @@ public class AsynchronousSocketChannelDemo {
                         this.pendingMessages.offer(input);
                     }
 
-                    if (!this.pendingMessages.isEmpty()) {
-                        if (!this.attachment.isInWrite()) {
-                            //Set inWrite
-                            this.attachment.setInWrite(true);
+                    if (!this.pendingMessages.isEmpty() && !this.attachment.isInWrite()) {
+                        //Set inWrite
+                        this.attachment.setInWrite(true);
 
-                            String current = this.pendingMessages.poll();
+                        String current = this.pendingMessages.poll();
 
-                            if (Attachment.isValid(current)) {
-                                attachment.getChannel().write(ByteBuffer.wrap(current.getBytes(StandardCharsets.UTF_8)), this.attachment, new WriteHandler());
-                            } else {
-                                System.out.printf("Message - \"%s\" is too long...%n", current);
-                            }
+                        if (Attachment.isValid(current)) {
+                            attachment.getChannel().write(
+                                    ByteBuffer.wrap(current.getBytes(StandardCharsets.UTF_8)), this.attachment, new WriteHandler()
+                            );
+
+                        } else {
+                            System.out.printf("Message - \"%s\" is too long...%n", current);
                         }
                     }
 
-                } while (!"quit".equals(input));
+                } while (this.client.isOpen() && !"quit".equals(input));
 
                 this.reader.close();
 
-                if (!this.pendingMessages.isEmpty()){
+                if (!this.pendingMessages.isEmpty()) {
                     System.err.println("Client closing, but pendingMessages is not empty!");
                 }
 
             } catch (IOException e) {
                 Attachment.logError("BufferedReader encountered an exception", e);
             } finally {
-                this.closeChannel();
+                Attachment.closeChannel(this.client);
             }
         }
 
@@ -77,14 +78,6 @@ public class AsynchronousSocketChannelDemo {
                 System.out.printf("Connected successfully to \"%s\"!%n", client.getRemoteAddress());
             } catch (IOException e) {
                 Attachment.logError("Failed to get remote address", e);
-            }
-        }
-
-        private void closeChannel() {
-            try {
-                this.client.close();
-            } catch (IOException e) {
-                Attachment.logError("Channel failed to close", e);
             }
         }
     }
@@ -113,15 +106,19 @@ public class AsynchronousSocketChannelDemo {
                 System.out.printf("Message written successfully - %d bytes sent%n", result);
             }
 
+            attachment.closeIfEndOfStream(result);
+
             //Reset write
             attachment.setInWrite(false);
-
-            attachment.closeIfEndOfStream(result);
         }
 
         @Override
         public void failed(Throwable exc, Attachment attachment) {
+            Attachment.closeChannel(attachment.getChannel());
+
             Attachment.logError("Write failed", exc);
+
+            attachment.setInWrite(false);
         }
     }
 }
