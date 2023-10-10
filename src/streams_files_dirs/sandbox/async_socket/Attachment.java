@@ -69,7 +69,7 @@ public class Attachment {
     }
 
     public static boolean isValid(String message) {
-        return message != null && message.getBytes(StandardCharsets.UTF_8).length <= LIMIT/100;
+        return message != null && message.getBytes(StandardCharsets.UTF_8).length <= LIMIT;
     }
 
     public static void logError(String message, Throwable exc) {
