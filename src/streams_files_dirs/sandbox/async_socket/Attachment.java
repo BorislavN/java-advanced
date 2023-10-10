@@ -15,7 +15,6 @@ public class Attachment {
     private final String name;
     private final AsynchronousSocketChannel channel;
     private final ByteBuffer inBuffer;
-    private boolean inRead;
     private boolean inWrite;
 
 
@@ -23,7 +22,6 @@ public class Attachment {
         this.lock = new Object();
         this.name = "connection" + ID.incrementAndGet();
         this.channel = channel;
-        this.inRead = false;
         this.inWrite = false;
         this.inBuffer = ByteBuffer.allocate(LIMIT);
     }
@@ -34,18 +32,6 @@ public class Attachment {
 
     public AsynchronousSocketChannel getChannel() {
         return this.channel;
-    }
-
-    public boolean isInRead() {
-        synchronized (this.lock) {
-            return this.inRead;
-        }
-    }
-
-    public void setInRead(boolean value) {
-        synchronized (this.lock) {
-            this.inRead = value;
-        }
     }
 
     public boolean isInWrite() {
@@ -64,12 +50,15 @@ public class Attachment {
         return this.inBuffer;
     }
 
-    public void closeIfEndOfStream(int result) {
+    public boolean closeIfEndOfStream(int result) {
         if (result == -1) {
             System.out.println("Closing channel, end of stream reached...");
-
             Attachment.closeChannel(this.channel);
+
+            return true;
         }
+
+        return false;
     }
 
     public String decodeMessage() {
@@ -79,28 +68,8 @@ public class Attachment {
         return output;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        Attachment that = (Attachment) o;
-
-        return name.equals(that.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return name.hashCode();
-    }
-
     public static boolean isValid(String message) {
-        return message != null && message.getBytes(StandardCharsets.UTF_8).length <= LIMIT;
+        return message != null && message.getBytes(StandardCharsets.UTF_8).length <= LIMIT/100;
     }
 
     public static void logError(String message, Throwable exc) {

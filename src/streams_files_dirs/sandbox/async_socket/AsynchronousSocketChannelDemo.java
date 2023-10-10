@@ -43,15 +43,14 @@ public class AsynchronousSocketChannelDemo {
                     }
 
                     if (!this.pendingMessages.isEmpty() && !this.attachment.isInWrite()) {
-                        //Set inWrite
-                        this.attachment.setInWrite(true);
-
                         String current = this.pendingMessages.poll();
 
                         if (Attachment.isValid(current)) {
-                            attachment.getChannel().write(
-                                    ByteBuffer.wrap(current.getBytes(StandardCharsets.UTF_8)), this.attachment, new WriteHandler()
-                            );
+                            this.attachment.setInWrite(true);
+
+                            ByteBuffer buffer = ByteBuffer.wrap(current.getBytes(StandardCharsets.UTF_8));
+
+                            this.attachment.getChannel().write(buffer, this.attachment, new WriteHandler());
 
                         } else {
                             System.out.printf("Message - \"%s\" is too long...%n", current);
@@ -60,17 +59,28 @@ public class AsynchronousSocketChannelDemo {
 
                 } while (this.client.isOpen() && !"quit".equals(input));
 
-                this.reader.close();
-
-                if (!this.pendingMessages.isEmpty()) {
-                    System.err.println("Client closing, but pendingMessages is not empty!");
-                }
-
             } catch (IOException e) {
-                Attachment.logError("BufferedReader encountered an exception", e);
+                Attachment.logError("BufferedReader failed to read", e);
             } finally {
-                Attachment.closeChannel(this.client);
+                this.shutdownClient();
             }
+        }
+
+        private void shutdownClient() {
+            //Close BufferedReader
+            try {
+                this.reader.close();
+            } catch (IOException e) {
+                Attachment.logError("BufferedReader failed to close", e);
+            }
+
+            //Check for pending messages
+            if (!this.pendingMessages.isEmpty()) {
+                System.err.println("Client closing, but pendingMessages is not empty!");
+            }
+
+            //Close channel
+            Attachment.closeChannel(this.client);
         }
 
         public static void connectedMessage(AsynchronousSocketChannel client) {
@@ -107,15 +117,12 @@ public class AsynchronousSocketChannelDemo {
             }
 
             attachment.closeIfEndOfStream(result);
-
-            //Reset write
             attachment.setInWrite(false);
         }
 
         @Override
         public void failed(Throwable exc, Attachment attachment) {
             Attachment.closeChannel(attachment.getChannel());
-
             Attachment.logError("Write failed", exc);
 
             attachment.setInWrite(false);
