@@ -8,14 +8,15 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.channels.MembershipKey;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 
+//Each client both sends and receives messages
+//Usernames can be duplicate
+//Type "/quit" to quit
+//TODO: investigate why when the channel gets "connected", it stops receiving multicast packets
 public class MulticastDemo {
     private static final int MESSAGE_LIMIT = 256;
     private static final int USERNAME_LIMIT = 30;
-    private static final List<String> USERNAMES = new ArrayList<>();
     private static final String GROUP_IP = "225.4.5.6";
     private static final int PORT = 6969;
 
@@ -69,11 +70,6 @@ public class MulticastDemo {
                         continue;
                     }
 
-                    if (USERNAMES.contains(input)) {
-                        System.out.println("Username is already taken!");
-                        continue;
-                    }
-
                     this.username = input;
                 }
             } catch (IOException e) {
@@ -86,6 +82,11 @@ public class MulticastDemo {
 
             try {
                 //"lo" is localhost
+                //The Client can be used on your LAN network
+                //I tested it with my laptop
+                //But u need to change "lo" to some other interface
+                //I ran "InterfaceLister.java" and picked the interface, that has my PC name on it
+                //Did the same for the laptop, and that was it, connected successfully...
                 NetworkInterface netI = NetworkInterface.getByName("lo");
 
                 this.channel.setOption(StandardSocketOptions.SO_REUSEADDR, true)
@@ -106,8 +107,6 @@ public class MulticastDemo {
 
         private void closeChannel(MembershipKey key) {
             try {
-                USERNAMES.remove(this.username);
-
                 if (key != null) {
                     key.drop();
                 }
@@ -148,7 +147,6 @@ public class MulticastDemo {
 
                     if (address != null) {
                         System.out.println(decodeMessage(buffer.flip()));
-
                     }
                 }
             } catch (IOException e) {
@@ -159,7 +157,14 @@ public class MulticastDemo {
         }
     }
 
-    private record ConsoleReader(ArrayBlockingQueue<String> pendingMessages, BufferedReader bufferedReader) implements Runnable {
+    private static final class ConsoleReader implements Runnable {
+        private final ArrayBlockingQueue<String> pendingMessages;
+        private final BufferedReader bufferedReader;
+
+        private ConsoleReader(ArrayBlockingQueue<String> pendingMessages, BufferedReader bufferedReader) {
+            this.pendingMessages = pendingMessages;
+            this.bufferedReader = bufferedReader;
+        }
 
         @Override
         public void run() {
