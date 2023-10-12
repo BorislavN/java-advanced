@@ -12,7 +12,8 @@ public class InterfaceLister {
         while (interfaces.hasMoreElements()) {
             NetworkInterface currentInterface = interfaces.nextElement();
 
-            System.out.println(currentInterface.supportsMulticast());
+            System.out.println("Loopback: "+currentInterface.isLoopback());
+            System.out.println( "Multicast: "+currentInterface.supportsMulticast());
             System.out.println(currentInterface.getIndex());
             System.out.println(currentInterface.getName());
             System.out.println(currentInterface.getDisplayName());

@@ -13,7 +13,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 //Each client both sends and receives messages
 //Usernames can be duplicate
 //Type "/quit" to quit
-//TODO: investigate why when the channel gets "connected", it stops receiving multicast packets
 public class MulticastDemo {
     private static final int MESSAGE_LIMIT = 256;
     private static final int USERNAME_LIMIT = 30;
@@ -147,6 +146,7 @@ public class MulticastDemo {
 
                     if (address != null) {
                         System.out.println(decodeMessage(buffer.flip()));
+                        System.out.println(address);
                     }
                 }
             } catch (IOException e) {
