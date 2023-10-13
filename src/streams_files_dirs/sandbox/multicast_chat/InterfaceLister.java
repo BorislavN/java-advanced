@@ -12,24 +12,24 @@ public class InterfaceLister {
         while (interfaces.hasMoreElements()) {
             NetworkInterface currentInterface = interfaces.nextElement();
 
-            System.out.println("Loopback: "+currentInterface.isLoopback());
-            System.out.println( "Multicast: "+currentInterface.supportsMulticast());
-            System.out.println(currentInterface.getIndex());
-            System.out.println(currentInterface.getName());
+            System.out.println("------------------------------------------");
+            System.out.println("Loopback: " + currentInterface.isLoopback());
+            System.out.println("Multicast: " + currentInterface.supportsMulticast());
+            System.out.println("Index: " + currentInterface.getIndex());
+            System.out.println("Interface name: " + currentInterface.getName());
             System.out.println(currentInterface.getDisplayName());
 
-            System.out.println("Addresses");
-
             Enumeration<InetAddress> inetAddresses = currentInterface.getInetAddresses();
+
+            System.out.println();
 
             while (inetAddresses.hasMoreElements()) {
                 InetAddress address = inetAddresses.nextElement();
 
-                System.out.println(address.getHostName());
-                System.out.println(address.getHostAddress());
+                System.out.println("Hostname: " + address.getHostName());
+                System.out.println("Address: " + address.getHostAddress());
+                System.out.println();
             }
-
-            System.out.println();
         }
 
         //Can be used to find devices connected to your lan ( those which IP starts with "192.168.0")
