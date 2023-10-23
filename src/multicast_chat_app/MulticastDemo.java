@@ -1,4 +1,4 @@
-package streams_files_dirs.sandbox.multicast_chat;
+package multicast_chat_app;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -146,7 +146,7 @@ public class MulticastDemo {
 
                     if (address != null) {
                         System.out.println(decodeMessage(buffer.flip()));
-                        System.out.println(address);
+//                        System.out.println(address);
                     }
                 }
             } catch (IOException e) {

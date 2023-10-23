@@ -1,4 +1,4 @@
-package streams_files_dirs.sandbox.multicast_chat;
+package multicast_chat_app;
 
 import java.io.BufferedReader;
 import java.io.IOException;
