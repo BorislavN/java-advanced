@@ -4,10 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class ListOfPredicates {
     public static void main(String[] args) throws IOException {
@@ -15,28 +17,33 @@ public class ListOfPredicates {
 
         int n = Integer.parseInt(reader.readLine());
 
-        Function<Integer, Predicate<Integer>> createPredicate = (divisor) -> ((value) -> value % divisor == 0);
-
-        List<Predicate<Integer>> predicates = Arrays.stream(reader.readLine().split("\\s+"))
-                .mapToInt(Integer::parseInt)
+        List<Integer> divisors = Arrays.stream(reader.readLine().split("\\s+"))
+                .map(Integer::parseInt)
                 .distinct()
-                .mapToObj(createPredicate::apply)
                 .collect(Collectors.toList());
 
+        divisors.sort(Comparator.reverseOrder());
 
-        for (int i = 1; i <= n; i++) {
-            boolean isValid = true;
+        Function<Integer, Predicate<Integer>> createPredicate = (divisor) -> ((value) -> value % divisor == 0);
 
+        List<Predicate<Integer>> predicates = divisors.stream()
+                .map(createPredicate)
+                .collect(Collectors.toList());
+
+        Predicate<Integer> testElement = (e) -> {
             for (Predicate<Integer> predicate : predicates) {
-                if (!predicate.test(i)) {
-                    isValid = false;
-                    break;
+                if (!predicate.test(e)) {
+                    return false;
                 }
             }
 
-            if (isValid) {
-                System.out.print(i + " ");
-            }
-        }
+            return true;
+        };
+
+        StringBuilder output = new StringBuilder();
+
+        IntStream.range(1, n + 1).filter(testElement::test).forEach(e -> output.append(e).append(" "));
+
+        System.out.println(output);
     }
 }
