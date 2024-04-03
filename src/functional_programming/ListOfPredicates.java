@@ -20,9 +20,8 @@ public class ListOfPredicates {
         List<Integer> divisors = Arrays.stream(reader.readLine().split("\\s+"))
                 .map(Integer::parseInt)
                 .distinct()
+                .sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList());
-
-        divisors.sort(Comparator.reverseOrder());
 
         Function<Integer, Predicate<Integer>> createPredicate = (divisor) -> ((value) -> value % divisor == 0);
 
