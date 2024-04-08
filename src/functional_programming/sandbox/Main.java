@@ -27,9 +27,9 @@ public class Main {
         MyFunction<Integer, Integer> multiplyV2 = (v) -> v * 2;
 
         int thenResult = sumV2.then(multiplyV2).call(1);
-        int beforeResult = sumV2.before(multiplyV2).call(1);
+        int beforeResult = sumV2.compose(multiplyV2).call(1);
 
         System.out.printf("MyFunction then example, result: %d%n", thenResult);
-        System.out.printf("MyFunction before example, result: %d%n", beforeResult);
+        System.out.printf("MyFunction compose example, result: %d%n", beforeResult);
     }
 }
