@@ -24,9 +24,11 @@ public class Department {
 
     @Override
     public String toString() {
-        return this.employees.stream()
+        String list = this.employees.stream()
                 .sorted(Comparator.comparing(Employee::getSalary).reversed())
                 .map(Employee::toString)
                 .collect(Collectors.joining(System.lineSeparator()));
+
+        return String.format("Highest Average Salary: %s%n%s", this.name, list);
     }
 }
