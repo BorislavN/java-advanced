@@ -1,9 +1,9 @@
 package defining_classes.six;
 
 public class Pokemon {
-    private String name;
-    private String element;
-    private int health;
+    private final String name;
+    private final String element;
+    private  int health;
 
     public Pokemon(String name, String element, int health) {
         this.name = name;
