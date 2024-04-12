@@ -28,6 +28,10 @@ public class Person {
         this.children.add(child);
     }
 
+    public String getNames(){
+        return String.format("%s %s",this.firstName,this.lastName);
+    }
+
     @Override
     public String toString() {
         return String.format("%s %s %s"
