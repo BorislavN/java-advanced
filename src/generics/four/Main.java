@@ -12,8 +12,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        List<Box<Integer>> list;
-        list = new ArrayList<>();
+        List<Box<Integer>>  list = new ArrayList<>();
 
         int n = Integer.parseInt(reader.readLine());
 

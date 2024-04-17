@@ -1,4 +1,4 @@
-package generics.five;
+package generics.six;
 
 
 import java.io.BufferedReader;
@@ -12,17 +12,17 @@ public class Main {
     public static void main(String[] args) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        List<Box<String>> list = new ArrayList<>();
+        List<Box<Double>> list = new ArrayList<>();
 
         int n = Integer.parseInt(reader.readLine());
 
         while (n-- > 0) {
-            list.add(new Box<>((reader.readLine())));
+            list.add(new Box<>((Double.parseDouble(reader.readLine()))));
         }
 
-        String filter = reader.readLine();
+        double filter = Double.parseDouble(reader.readLine());
 
-        Predicate<String> comparison = (value) -> value.compareTo(filter) > 0;
+        Predicate<Double> comparison = (value) -> value > filter;
 
         System.out.println(list.stream().filter(e -> e.isGrater(comparison)).count());
     }

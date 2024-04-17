@@ -1,4 +1,4 @@
-package generics.five;
+package generics.six;
 
 import java.util.function.Predicate;
 
