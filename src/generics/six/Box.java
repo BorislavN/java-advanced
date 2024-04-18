@@ -1,8 +1,6 @@
 package generics.six;
 
-import java.util.function.Predicate;
-
-public class Box<V> {
+public class Box<V extends Comparable<V>> {
     private final V value;
 
     public Box(V value) {
@@ -14,7 +12,7 @@ public class Box<V> {
         return String.format("%s: %s", this.value.getClass().getName(), this.value);
     }
 
-    public boolean isGrater(Predicate<V> condition) {
-        return condition.test(this.value);
+    public boolean isGrater(V filter) {
+        return this.value.compareTo(filter) > 0;
     }
 }

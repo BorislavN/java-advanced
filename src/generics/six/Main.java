@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -22,8 +21,6 @@ public class Main {
 
         double filter = Double.parseDouble(reader.readLine());
 
-        Predicate<Double> comparison = (value) -> value > filter;
-
-        System.out.println(list.stream().filter(e -> e.isGrater(comparison)).count());
+        System.out.println(list.stream().filter(e -> e.isGrater(filter)).count());
     }
 }
