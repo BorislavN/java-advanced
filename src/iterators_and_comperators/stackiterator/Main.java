@@ -1,4 +1,4 @@
-package iterators_and_comperators;
+package iterators_and_comperators.stackiterator;
 
 import java.io.BufferedReader;
 import java.io.IOException;
