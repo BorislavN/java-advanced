@@ -38,7 +38,6 @@ public class Main {
 
                     case "PrintAll":
                         StringBuilder output = new StringBuilder();
-
                         iterator.forEach(e -> output.append(e).append(" "));
 
                         System.out.println(output);

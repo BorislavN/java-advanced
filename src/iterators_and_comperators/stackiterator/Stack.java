@@ -29,10 +29,12 @@ public class Stack<T> implements Iterable<T> {
     }
 
     private class StackIterator implements Iterator<T> {
+        private boolean finishedLoopOne;
         private int position;
 
         public StackIterator() {
             this.position = list.size() - 1;
+            this.finishedLoopOne = false;
         }
 
         @Override
@@ -42,11 +44,19 @@ public class Stack<T> implements Iterable<T> {
 
         @Override
         public T next() {
-            if (this.hasNext()) {
-                return list.get(this.position--);
+            if (!this.hasNext()) {
+                return null;
             }
 
-            return null;
+            T element = list.get(this.position);
+            this.position -= 1;
+
+            if (this.position == -1 && !this.finishedLoopOne) {
+                this.finishedLoopOne = true;
+                this.position = list.size() - 1;
+            }
+
+            return element;
         }
     }
 }

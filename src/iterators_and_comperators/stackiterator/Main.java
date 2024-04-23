@@ -30,12 +30,6 @@ public class Main {
             }
         }
 
-        StringBuilder output = new StringBuilder();
-
-        for (int i = 0; i < 2; i++) {
-            stack.forEach(e -> output.append(e).append(System.lineSeparator()));
-        }
-
-        System.out.println(output.toString().trim());
+        stack.forEach(System.out::println);
     }
 }
