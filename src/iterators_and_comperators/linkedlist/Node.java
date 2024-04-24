@@ -20,4 +20,9 @@ public class Node<T> {
     public void setNext(Node<T> val) {
         this.next = val;
     }
+
+    @Override
+    public String toString() {
+        return this.value.toString();
+    }
 }
