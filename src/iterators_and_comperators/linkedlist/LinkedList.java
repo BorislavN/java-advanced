@@ -1,13 +1,16 @@
 package iterators_and_comperators.linkedlist;
 
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class LinkedList<T> implements Iterable<Node<T>> {
     private Node<T> start;
+    private Node<T> end;
     private int size;
 
     public LinkedList() {
         this.start = null;
+        this.end = null;
         this.size = 0;
     }
 
@@ -15,23 +18,23 @@ public class LinkedList<T> implements Iterable<Node<T>> {
         return this.size;
     }
 
+    //Adding elements while iterating does not guarantee that the loop will include the new elements
+    //this is because the internal iterator pointer will not be updated in some cases
+    //Like if we are at the end of the loop and a new element is added
     public void add(T value) {
         this.size++;
 
+        Node<T> newNode = new Node<>(value);
+
         if (this.start == null) {
-            this.start = new Node<>(value);
+            this.start = newNode;
+            this.end = this.start;
 
             return;
         }
 
-        Node<T> last = this.start;
-        Iterator<Node<T>> iter = this.iterator();
-
-        while (iter.hasNext()) {
-            last = iter.next();
-        }
-
-        last.setNext(new Node<>(value));
+        this.end.setNext(newNode);
+        this.end = newNode;
     }
 
     public void remove(T element) {
@@ -42,7 +45,6 @@ public class LinkedList<T> implements Iterable<Node<T>> {
 
             if (current.getValue().equals(element)) {
                 iter.remove();
-                this.size--;
 
                 break;
             }
@@ -58,11 +60,14 @@ public class LinkedList<T> implements Iterable<Node<T>> {
         private Node<T> prevElement;
         private Node<T> currentElement;
         private Node<T> nextElement;
+        private boolean removeCalled;
+
 
         public MyIterator() {
             this.prevElement = null;
             this.currentElement = null;
             this.nextElement = start;
+            this.removeCalled = false;
         }
 
         @Override
@@ -73,7 +78,7 @@ public class LinkedList<T> implements Iterable<Node<T>> {
         @Override
         public Node<T> next() {
             if (!this.hasNext()) {
-                return null;
+                throw new NoSuchElementException("No next element!");
             }
 
             Node<T> output = this.nextElement;
@@ -81,6 +86,8 @@ public class LinkedList<T> implements Iterable<Node<T>> {
             this.prevElement = this.currentElement;
             this.currentElement = output;
             this.nextElement = output.getNext();
+
+            this.removeCalled = false;
 
             return output;
         }
@@ -91,19 +98,30 @@ public class LinkedList<T> implements Iterable<Node<T>> {
                 throw new IllegalStateException("Current element is null!");
             }
 
-            if (this.prevElement != null) {
-                this.prevElement.setNext(this.nextElement);
+            if (this.removeCalled) {
+                throw new IllegalStateException("The element was already removed!");
             }
 
+            //Reset "start" reference if the "currentElement" is the first in the list
             if (this.prevElement == null) {
                 start = this.nextElement;
             }
 
-            this.currentElement = this.nextElement;
-
-            if (this.currentElement!=null){
-                this.nextElement = this.currentElement.getNext();
+            //Reset "end" reference if the "currentElement" is the last in the list
+            if (this.nextElement == null) {
+                end = this.prevElement;
             }
+
+            //Attach the "nextElement" as the child of the "prevElement"
+            if (this.prevElement != null) {
+                this.prevElement.setNext(this.nextElement);
+            }
+
+            //Remove the reference to the deleted element
+            this.currentElement = this.prevElement;
+
+            this.removeCalled = true;
+            size--;
         }
     }
 }

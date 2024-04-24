@@ -25,6 +25,6 @@ public class Main {
         }
 
         System.out.println(list.getSize());
-        list.forEach(e-> System.out.print(e.toString().concat(" ")));
+        list.forEach(e -> System.out.print(e.toString().concat(" ")));
     }
 }

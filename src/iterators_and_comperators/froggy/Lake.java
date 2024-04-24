@@ -2,6 +2,7 @@ package iterators_and_comperators.froggy;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class Lake implements Iterable<Integer> {
     private final int[] numbers;
@@ -32,7 +33,7 @@ public class Lake implements Iterable<Integer> {
         @Override
         public Integer next() {
             if (!this.hasNext()) {
-                return null;
+                throw new NoSuchElementException("No next element!");
             }
 
             int element = numbers[this.position];

@@ -3,6 +3,7 @@ package iterators_and_comperators.stackiterator;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class Stack<T> implements Iterable<T> {
     private final List<T> list;
@@ -45,7 +46,7 @@ public class Stack<T> implements Iterable<T> {
         @Override
         public T next() {
             if (!this.hasNext()) {
-                return null;
+                throw new NoSuchElementException("No next element!");
             }
 
             T element = list.get(this.position);
