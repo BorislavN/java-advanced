@@ -18,7 +18,6 @@ import static java.nio.channels.SelectionKey.*;
 //Use "/user {name}" to choose a username
 //Use "/quit" to quit
 
-//TODO:  user-left message does not show up, after quitting
 public class ChatServer implements Runnable {
     private final ServerSocketChannel server;
     private final Selector mainSelector;
