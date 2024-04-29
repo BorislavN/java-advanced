@@ -14,12 +14,52 @@ public class DoublyLinkedList<E> implements Iterable<E> {
     }
 
     public void add(E element) {
-        //TODO: this method should add element to the end of the list
+        Node<E> newNode = new Node<>(element);
+        this.size++;
+
+        if (this.head == null) {
+            this.head = newNode;
+            this.tail = newNode;
+
+            return;
+        }
+
+        newNode.setPrev(this.tail);
+        this.tail.setNext(newNode);
+        this.tail = newNode;
     }
 
     public void add(int index, E element) {
-        //TODO: this method should add element at the given index
-        // we won't have index field, but a variable counting nodes in a loop
+        if (index < 0 || index > this.size) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        if (index == this.size) {
+            this.add(element);
+
+            return;
+        }
+
+        Node<E> newNode = new Node<>(element);
+        Node<E> target = this.head;
+        this.size++;
+
+        while (index-- > 0) {
+            target = target.getNext();
+        }
+
+        if (target.getPrev() == null) {
+            this.head = newNode;
+        }
+
+        newNode.setNext(target);
+        newNode.setPrev(target.getPrev());
+
+        if (target.getPrev() != null) {
+            target.getPrev().setNext(newNode);
+        }
+
+        target.setPrev(newNode);
     }
 
     public E remove(E element) {
@@ -60,8 +100,18 @@ public class DoublyLinkedList<E> implements Iterable<E> {
 
     @Override
     public String toString() {
-        //TODO: this method should return a String.format of all elements, separated by ", "
-        return "DoublyLinkedList{}";
+        StringBuilder output = new StringBuilder();
+
+        if (this.head != null) {
+            Node<E> current = this.head;
+
+            while (current != null) {
+                output.append(String.format("Value: %s, Prev: %s, Next %s%n", current.getValue(), current.getPrev(), current.getNext()));
+                current = current.getNext();
+            }
+        }
+
+        return output.toString();
     }
 
     @Override
