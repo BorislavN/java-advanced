@@ -110,7 +110,7 @@ public class DoublyLinkedList<E> implements Iterable<E> {
             return (E[]) new Object[0];
         }
 
-        E[] temp = (E[]) Array.newInstance(this.head.getClass(), this.size);
+        E[] temp = (E[]) Array.newInstance(this.head.getValue().getClass(), this.size);
         Node<E> start = this.head;
 
         for (int index = 0; index < temp.length; index++) {
@@ -119,6 +119,12 @@ public class DoublyLinkedList<E> implements Iterable<E> {
         }
 
         return temp;
+    }
+
+    public void clear() {
+        this.head = null;
+        this.tail = null;
+        this.size = 0;
     }
 
     @Override
@@ -134,7 +140,7 @@ public class DoublyLinkedList<E> implements Iterable<E> {
             }
         }
 
-        return output.toString();
+        return output.toString().trim();
     }
 
     @Override
@@ -175,8 +181,19 @@ public class DoublyLinkedList<E> implements Iterable<E> {
         Node<E> prev = node.getPrev();
         Node<E> next = node.getNext();
 
-        prev.setNext(next);
-        next.setPrev(prev);
+        if (prev != null) {
+            prev.setNext(next);
+        } else {
+            this.head = next;
+        }
+
+        if (next != null) {
+            next.setPrev(prev);
+        } else {
+            this.tail = prev;
+        }
+
+        this.size--;
     }
 
     private class MyIterator implements Iterator<E> {
