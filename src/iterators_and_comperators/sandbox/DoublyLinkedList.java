@@ -1,6 +1,8 @@
 package iterators_and_comperators.sandbox;
 
+import java.lang.reflect.Array;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 public class DoublyLinkedList<E> implements Iterable<E> {
     private Node<E> head;
@@ -30,72 +32,93 @@ public class DoublyLinkedList<E> implements Iterable<E> {
     }
 
     public void add(int index, E element) {
-        if (index < 0 || index > this.size) {
-            throw new IndexOutOfBoundsException();
-        }
-
         if (index == this.size) {
             this.add(element);
 
             return;
         }
 
+        this.validateIndex(index);
+
         Node<E> newNode = new Node<>(element);
-        Node<E> target = this.head;
+        Node<E> target = this.getNode(index);
         this.size++;
-
-        while (index-- > 0) {
-            target = target.getNext();
-        }
-
-        if (target.getPrev() == null) {
-            this.head = newNode;
-        }
 
         newNode.setNext(target);
         newNode.setPrev(target.getPrev());
 
         if (target.getPrev() != null) {
             target.getPrev().setNext(newNode);
+        } else {
+            this.head = newNode;
         }
 
         target.setPrev(newNode);
     }
 
-    public E remove(E element) {
-        //TODO: this method should remove the first element matching the value
-        return null;
+    public void remove(E element) {
+        Iterator<E> iterator = this.iterator();
+
+        while (iterator().hasNext()) {
+            E current = iterator.next();
+
+            if (current.equals(element)) {
+                iterator.remove();
+
+                break;
+            }
+        }
     }
 
     public E remove(int index) {
-        //TODO: this method should remove the element at the given position
-        return null;
+        Node<E> target = this.getNode(index);
+        this.removeNode(target);
+
+        return target.getValue();
     }
 
     public boolean contains(E element) {
-        //TODO: this method should return true if the element is present
+        for (E e : this) {
+            if (e.equals(element)) {
+                return true;
+            }
+        }
+
         return false;
     }
 
     public E get(int index) {
-        //TODO: this method should return the element at the given index
-        return null;
+        return this.getNode(index).getValue();
     }
 
     public E set(int index, E element) {
-        //TODO: this method should set new value at the given index
-        // and return the old value
-        return null;
+        Node<E> current = this.getNode(index);
+        E oldValue = current.getValue();
+
+        current.setValue(element);
+
+        return oldValue;
     }
 
     public int getSize() {
         return this.size;
     }
 
+    @SuppressWarnings("unchecked")
     public E[] toArray() {
+        if (this.head == null) {
+            return (E[]) new Object[0];
+        }
 
-        //TODO: this method should return an array resembling the list, crated with Array.newInstance(this.tail.getValue().getClass(),size)
-        return null;
+        E[] temp = (E[]) Array.newInstance(this.head.getClass(), this.size);
+        Node<E> start = this.head;
+
+        for (int index = 0; index < temp.length; index++) {
+            temp[index] = start.getValue();
+            start = start.getNext();
+        }
+
+        return temp;
     }
 
     @Override
@@ -119,15 +142,76 @@ public class DoublyLinkedList<E> implements Iterable<E> {
         return new MyIterator();
     }
 
+    private void validateIndex(int index) {
+        if (index < 0 || index >= this.size) {
+            throw new IndexOutOfBoundsException();
+        }
+    }
+
+    private Node<E> getNode(int index) {
+        this.validateIndex(index);
+        Node<E> current = this.head;
+
+        if (index <= this.size / 2) {
+            while (index-- > 0) {
+                current = current.getNext();
+            }
+
+            return current;
+        }
+
+        current = this.tail;
+        index = this.size - 1 - index;
+
+        while (index-- > 0) {
+            current = current.getPrev();
+        }
+
+
+        return current;
+    }
+
+    private void removeNode(Node<E> node) {
+        Node<E> prev = node.getPrev();
+        Node<E> next = node.getNext();
+
+        prev.setNext(next);
+        next.setPrev(prev);
+    }
+
     private class MyIterator implements Iterator<E> {
+        private Node<E> current;
+        private Node<E> last;
+
+        public MyIterator() {
+            this.current = head;
+            this.last = null;
+        }
+
         @Override
         public boolean hasNext() {
-            return false;
+            return this.current != null;
         }
 
         @Override
         public E next() {
-            return null;
+            if (!this.hasNext()) {
+                throw new NoSuchElementException("No next element!");
+            }
+            this.last = this.current;
+            this.current = this.current.getNext();
+
+            return this.last.getValue();
+        }
+
+        @Override
+        public void remove() {
+            if (this.last == null) {
+                throw new IllegalStateException("next() must be called, before removing the element!");
+            }
+
+            removeNode(this.last);
+            this.last = null;
         }
     }
 }

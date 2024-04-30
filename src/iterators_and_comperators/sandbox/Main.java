@@ -7,10 +7,10 @@ public class Main {
         list.add("1");
         list.add("2");
         list.add("3");
-//        list.add(0,"pesho");
-//        list.add(1,"gosho");
-//        list.add(2,"ivan");
-        list.add(3,"stamat");
+        list.add(0,"0.5");
+        list.add(2,"1.5");
+        list.add(4,"2.5");
+        list.add(6,"3.5");
 
         System.out.println(list);
     }
