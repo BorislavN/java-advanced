@@ -75,6 +75,7 @@ public class Main {
         printTestName("Iterator");
         list.clear();
 
+        list.add("0");
         list.add("1");
         list.add("2");
         list.add("3");
@@ -87,7 +88,7 @@ public class Main {
             String current = iter.next();
             System.out.println("Current - " + current);
 
-            if (current.equals("2") || current.equals("4")) {
+            if (current.equals("0") || current.equals("2") || current.equals("4") || current.equals("5")) {
                 iter.remove();
 
                 System.out.println("Removed - " + current);
